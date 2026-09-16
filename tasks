@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Tasks</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0B1420;
+  --surface:#121C2B;
+  --surface-2:#1A2740;
+  --border:#2A3C58;
+  --text:#F2F6FB;
+  --text-muted:#9DAFC7;
+  --accent:#33D6A6;
+  --accent-dim:#1E5C4B;
+  --amber:#FFB35C;
+  --blue:#6C8CFF;
+  --danger:#FF6B6B;
+  --radius:14px;
+  --col-w:330px;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;font-size:17px;line-height:1.45;
+  -webkit-text-size-adjust:100%;
+}
+#app{max-width:1600px;margin:0 auto;padding:22px 20px 50px;}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;margin:0;}
+
+input,select,textarea,button{font-family:'Inter',sans-serif;}
+input,select,textarea{
+  background:var(--surface-2);border:2px solid var(--border);border-radius:10px;
+  color:var(--text);padding:12px 14px;font-size:16px;width:100%;
+}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);}
+textarea{resize:vertical;}
+
+.btn{
+  background:var(--accent);color:#06231b;border:none;border-radius:10px;
+  padding:13px 20px;font-weight:700;font-size:16px;cursor:pointer;white-space:nowrap;
+}
+.btn:hover{filter:brightness(1.08);}
+.btn:active{transform:translateY(1px);}
+.btn.ghost{background:var(--surface-2);color:var(--text);border:2px solid var(--border);}
+.btn.small{padding:9px 14px;font-size:15px;}
+.btn.wide{width:100%;}
+
+/* ---------- header ---------- */
+.head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+.head h1{font-size:30px;letter-spacing:-0.02em;}
+.head .state{font-size:14px;color:var(--text-muted);}
+.head .state.bad{color:var(--danger);}
+
+.toprow{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;margin-bottom:16px;}
+
+.daynav{display:flex;align-items:center;gap:8px;flex:1;min-width:280px;}
+.daynav .arrow{
+  background:var(--surface-2);border:2px solid var(--border);color:var(--text);
+  width:48px;height:48px;border-radius:10px;font-size:22px;cursor:pointer;flex-shrink:0;
+}
+.daynav .today{
+  flex:1;text-align:center;font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:600;
+}
+.daynav .today small{display:block;font-family:'Inter',sans-serif;font-size:14px;color:var(--text-muted);font-weight:400;}
+.daynav input[type=date]{width:auto;flex:0 0 auto;font-size:15px;padding:11px 12px;}
+
+/* ---------- hero ---------- */
+.hero{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:18px 22px;margin-bottom:16px;
+}
+.hero .row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;}
+.hero .n{font-family:'Space Grotesk',sans-serif;font-size:44px;line-height:1;font-weight:700;}
+.hero .n span{color:var(--text-muted);font-size:25px;font-weight:500;}
+.hero .lab{font-size:16px;color:var(--text-muted);}
+.hero .late{color:var(--danger);font-weight:600;}
+.bigbar{height:14px;background:#0A1320;border-radius:99px;overflow:hidden;margin-top:14px;border:1px solid var(--border);}
+.bigbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .35s ease;}
+
+.whorow{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;}
+.whorow .lab{font-size:15px;color:var(--text-muted);white-space:nowrap;}
+.whorow select{width:auto;min-width:180px;}
+.seg{display:flex;border:2px solid var(--border);border-radius:10px;overflow:hidden;}
+.seg button{background:var(--surface-2);color:var(--text-muted);border:none;padding:12px 18px;font-size:16px;cursor:pointer;}
+.seg button.on{background:var(--accent);color:#06231b;font-weight:700;}
+
+/* ---------- the column board ---------- */
+.board{
+  display:flex;gap:16px;align-items:flex-start;
+  overflow-x:auto;padding:4px 4px 18px;
+  scroll-snap-type:x proximity;
+}
+.col{
+  flex:0 0 var(--col-w);scroll-snap-align:start;
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+.col.clear{border-color:var(--accent-dim);}
+.col.me{border-color:var(--blue);}
+
+.col-head{padding:16px 16px 14px;border-bottom:2px solid var(--border);background:var(--surface-2);}
+.col-head .line{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.col-head .nm{
+  font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:700;line-height:1.15;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.col-head .kill{
+  flex-shrink:0;width:36px;height:36px;border-radius:9px;cursor:pointer;
+  background:transparent;border:2px solid var(--border);color:var(--text-muted);font-size:17px;line-height:1;
+}
+.col-head .kill:hover{border-color:var(--danger);color:var(--danger);}
+.col-head .score{
+  display:flex;align-items:baseline;gap:8px;margin-top:8px;
+  font-size:15px;color:var(--text-muted);
+}
+.col-head .score b{font-family:'Space Grotesk',sans-serif;font-size:27px;color:var(--accent);line-height:1;}
+.col-head .score .late{color:var(--danger);font-weight:600;margin-left:auto;}
+.minibar{height:9px;background:#0A1320;border-radius:99px;overflow:hidden;margin-top:10px;}
+.minibar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .35s ease;}
+
+.col-tasks{padding:14px 14px 4px;overflow-y:auto;max-height:min(56vh,560px);min-height:90px;}
+.col-foot{padding:0 14px 14px;}
+.col-foot .addrow{display:flex;gap:8px;}
+.col-foot input{font-size:16px;padding:12px;}
+.col-foot .btn{flex-shrink:0;padding:12px 16px;}
+
+/* task cards */
+.tcard{
+  display:flex;gap:11px;align-items:flex-start;
+  background:var(--surface-2);border:2px solid var(--border);border-left-width:7px;
+  border-radius:11px;padding:12px;margin-bottom:10px;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease;
+}
+.tcard:hover{background:#20304E;}
+.tcard.p-critical{border-left-color:var(--danger);}
+.tcard.p-high{border-left-color:var(--amber);}
+.tcard.p-medium{border-left-color:var(--blue);}
+.tcard.p-low{border-left-color:var(--text-muted);}
+.tcard.done{border-left-color:var(--accent);background:rgba(51,214,166,0.08);}
+.tcard.done .t-title{color:var(--text-muted);text-decoration:line-through;}
+
+.check{
+  flex-shrink:0;width:34px;height:34px;border-radius:9px;
+  border:3px solid var(--border);background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  color:transparent;font-size:19px;font-weight:700;padding:0;pointer-events:none;
+}
+.tcard.done .check{background:var(--accent);border-color:var(--accent);color:#06231b;}
+
+.t-body{flex:1;min-width:0;}
+.t-title{font-size:16.5px;font-weight:600;word-break:break-word;line-height:1.35;}
+.t-detail{font-size:14px;color:var(--text-muted);margin-top:3px;word-break:break-word;}
+.t-meta{display:flex;gap:7px;flex-wrap:wrap;margin-top:7px;font-size:13px;color:var(--text-muted);}
+.t-meta:empty{display:none;}
+.t-meta .due{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:2px 9px;}
+.t-meta .due.late{border-color:var(--danger);color:var(--danger);font-weight:600;}
+.t-meta .who{color:var(--accent);}
+
+.kill-task{
+  flex-shrink:0;width:32px;height:32px;border-radius:8px;cursor:pointer;
+  background:transparent;border:2px solid transparent;color:var(--text-muted);font-size:16px;line-height:1;padding:0;
+}
+.tcard:hover .kill-task{border-color:var(--border);}
+.kill-task:hover{border-color:var(--danger);color:var(--danger);}
+
+.col-empty{
+  color:var(--text-muted);font-size:15px;text-align:center;
+  padding:22px 12px;border:2px dashed var(--border);border-radius:11px;margin-bottom:10px;
+}
+
+/* add-agent column */
+.col.addcol{
+  border-style:dashed;background:transparent;padding:16px;
+}
+.col.addcol h3{font-size:18px;margin-bottom:6px;}
+.col.addcol p{font-size:14px;color:var(--text-muted);margin:0 0 12px;}
+.col.addcol .addrow{display:flex;gap:8px;}
+.col.addcol .btn{flex-shrink:0;}
+
+/* ---------- tools ---------- */
+.toolbtn{margin-bottom:16px;}
+.tools{
+  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);
+  padding:18px;margin-bottom:18px;
+}
+.tools h2{font-size:19px;margin-bottom:12px;}
+.tools .grp{margin-bottom:22px;}
+.tools .grp:last-child{margin-bottom:0;}
+.tools label{display:block;font-size:15px;color:var(--text-muted);margin-bottom:7px;}
+.tools textarea{min-height:110px;font-size:16px;}
+.tools .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;}
+.tools .tip{font-size:14.5px;color:var(--text-muted);margin-top:10px;line-height:1.7;}
+.tools code{background:var(--surface-2);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text);}
+.tools .pair{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
+.tools .pair > div{flex:1;min-width:170px;}
+
+.none{color:var(--text-muted);font-size:16px;text-align:center;padding:26px;border:2px dashed var(--border);border-radius:12px;}
+
+@media(max-width:700px){
+  :root{--col-w:86vw;}
+  #app{padding:16px 13px 50px;}
+  .head h1{font-size:26px;}
+  .hero .n{font-size:38px;}
+  .check{width:38px;height:38px;}
+  .col-tasks{max-height:none;}
+  .seg{width:100%;}
+  .seg button{flex:1;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="head">
+    <h1>Daily Tasks</h1>
+    <div class="state" id="loadState">Loading…</div>
+  </div>
+
+  <div class="toprow">
+    <div class="daynav">
+      <button class="arrow" onclick="shiftDay(-1)" title="Previous day">‹</button>
+      <div class="today" id="dayLabel">Today<small id="daySub"></small></div>
+      <button class="arrow" onclick="shiftDay(1)" title="Next day">›</button>
+      <input type="date" id="dayPicker">
+      <button class="btn ghost small" onclick="goToday()">Today</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="row">
+      <div class="n" id="heroNum">0<span> / 0</span></div>
+      <div class="lab" id="heroLab"></div>
+    </div>
+    <div class="bigbar"><i id="heroBar" style="width:0%"></i></div>
+  </div>
+
+  <div class="whorow">
+    <span class="lab">I'm</span>
+    <select id="whoAmI"></select>
+    <div class="seg" id="modeSeg">
+      <button data-mode="team" onclick="setMode('team')">Whole team</button>
+      <button data-mode="mine" onclick="setMode('mine')">Just me</button>
+    </div>
+  </div>
+
+  <button class="btn ghost wide toolbtn" id="toolToggle" onclick="toggleTools()">Show more tools</button>
+
+  <div class="tools" id="tools" style="display:none;">
+    <div class="grp">
+      <h2>Assign a list of tasks</h2>
+      <label>One task per line</label>
+      <textarea id="a_lines" placeholder="Call 25 winback leads @11:00 !high&#10;Clean up yesterday's pending installs&#10;Send MON confirmations | check every order has a MON number"></textarea>
+      <div class="pair" style="margin-top:12px;">
+        <div>
+          <label>Give them to</label>
+          <select id="a_agent"></select>
+        </div>
+        <div>
+          <label>Priority, unless the line says otherwise</label>
+          <select id="a_priority">
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="btns">
+        <button class="btn" onclick="assignTasks(false)">Assign to that agent</button>
+        <button class="btn ghost" onclick="assignTasks(true)">Assign to everyone</button>
+      </div>
+      <div class="tip">
+        Add <code>@11:00</code> for a due time, <code>!high</code> / <code>!critical</code> / <code>!low</code> to set that line's priority, and <code>|</code> to put a note under the task.
+      </div>
+    </div>
+
+    <div class="grp">
+      <h2>Templates</h2>
+      <label>Save the lines above, or drop a saved set onto this day</label>
+      <select id="tplPicker"></select>
+      <div class="btns">
+        <button class="btn ghost small" onclick="applyTemplate(false)">Apply to agent</button>
+        <button class="btn ghost small" onclick="applyTemplate(true)">Apply to everyone</button>
+        <button class="btn ghost small" onclick="saveTemplate()">Save lines as template</button>
+        <button class="btn ghost small" onclick="deleteTemplate()">Delete template</button>
+      </div>
+    </div>
+
+    <div class="grp">
+      <h2>Day tools</h2>
+      <div class="btns">
+        <button class="btn ghost small" onclick="carryOver()">Carry unfinished from yesterday</button>
+        <button class="btn ghost small" id="copyBoardBtn" onclick="copySummary()">Copy summary for Teams</button>
+        <button class="btn ghost small" onclick="reload(true)">Refresh now</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+
+// Paste the /exec URL of the Tasks Apps Script deployment here.
+const API_URL = 'PASTE_YOUR_TASKS_EXEC_URL_HERE';
+
+// Must match API_KEY in the Apps Script.
+const API_KEY = 'miami-tasks-2026';
+
+const REFRESH_MS = 15000;
+
+// The roster lives in the same Tasks sheet, in rows marked with this key, so
+// adding or removing an agent in the app sticks for everyone. The key starts
+// with "tpl:" because the backend always returns those rows no matter which
+// day is being viewed — no Apps Script changes needed.
+const ROSTER_KEY = 'tpl:#agents';
+
+/* ============================================================
+   State
+   ============================================================ */
+
+let tasks = [];        // tasks for the selected day
+let rosterRows = [];   // one row per agent
+let templates = [];    // saved task-list templates
+let selectedDate = todayStr();
+let mode = 'team';
+let me = '';
+let isSaving = false;
+let firstLoad = true;
+let toolsOpen = false;
+
+const AGENT_IDS = {};  // safe dom id -> real agent name
+
+function todayStr(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function agentKey(name){
+  const key = 'ag' + String(name).replace(/[^a-zA-Z0-9]/g, '_');
+  AGENT_IDS[key] = name;
+  return key;
+}
+
+function remember(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+function recall(k){ try{ return localStorage.getItem(k) || ''; }catch(e){ return ''; } }
+
+/* ============================================================
+   Toast / prompt / confirm
+   ============================================================ */
+
+function showToast(msg, actionLabel, onAction, ms){
+  let t = document.getElementById('appToast');
+  if(t) t.remove();
+  t = document.createElement('div');
+  t.id = 'appToast';
+  t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--surface);border:2px solid var(--border);color:var(--text);padding:14px 18px;border-radius:12px;font-size:16px;z-index:10000;box-shadow:0 6px 22px rgba(0,0,0,.5);max-width:92%;display:flex;align-items:center;gap:14px;';
+  const span = document.createElement('span');
+  span.textContent = msg;
+  t.appendChild(span);
+  if(actionLabel){
+    const b = document.createElement('button');
+    b.className = 'btn small';
+    b.textContent = actionLabel;
+    b.onclick = () => { t.remove(); onAction(); };
+    t.appendChild(b);
+  }
+  document.body.appendChild(t);
+  setTimeout(() => { if(t.parentNode) t.remove(); }, ms || 4000);
+}
+
+function modalShell(inner){
+  let m = document.getElementById('appModal');
+  if(m) m.remove();
+  m = document.createElement('div');
+  m.id = 'appModal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;';
+  m.innerHTML = `<div style="background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:22px;max-width:440px;width:100%;">${inner}</div>`;
+  document.body.appendChild(m);
+  return m;
+}
+
+function showPrompt(message, placeholder, onOk){
+  const m = modalShell(`
+    <div style="font-size:19px;font-weight:600;margin-bottom:14px;">${escapeHtml(message)}</div>
+    <input id="pmInput" placeholder="${escapeHtml(placeholder||'')}">
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+      <button class="btn ghost small" id="pmNo">Cancel</button>
+      <button class="btn small" id="pmYes">Save</button>
+    </div>`);
+  const input = document.getElementById('pmInput');
+  input.focus();
+  const submit = () => { const v = input.value.trim(); m.remove(); if(v) onOk(v); };
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
+  document.getElementById('pmNo').onclick = () => m.remove();
+  document.getElementById('pmYes').onclick = submit;
+}
+
+function showConfirm(message, yesLabel, onYes){
+  const m = modalShell(`
+    <div style="font-size:17px;line-height:1.5;margin-bottom:18px;">${message}</div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;">
+      <button class="btn ghost small" id="cfNo">Cancel</button>
+      <button class="btn small" id="cfYes" style="background:var(--danger);color:#2A0A0A;">${escapeHtml(yesLabel)}</button>
+    </div>`);
+  document.getElementById('cfNo').onclick = () => m.remove();
+  document.getElementById('cfYes').onclick = () => { m.remove(); onYes(); };
+}
+
+function setState(msg, bad){
+  const el = document.getElementById('loadState');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.toggle('bad', !!bad);
+}
+
+/* ============================================================
+   API
+   ============================================================ */
+
+async function apiGet(date){
+  const url = `${API_URL}?action=list&key=${encodeURIComponent(API_KEY)}&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+  const res = await fetch(url, { method:'GET', redirect:'follow', cache:'no-store' });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  if(text.trim().startsWith('<')){
+    throw new Error('The web app returned a login page — set "Who has access" to Anyone and redeploy.');
+  }
+  const data = JSON.parse(text);
+  if(!data.success) throw new Error(data.error || 'Load failed');
+  return Array.isArray(data.tasks) ? data.tasks : [];
+}
+
+async function apiPost(payload){
+  isSaving = true;
+  try{
+    const res = await fetch(API_URL, {
+      method:'POST',
+      redirect:'follow',
+      body: JSON.stringify({ key: API_KEY, ...payload })
+    });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Save failed');
+    return data;
+  }finally{
+    isSaving = false;
+  }
+}
+
+async function reload(showSpinner){
+  if(API_URL.indexOf('PASTE_') === 0){
+    setState('Not connected', true);
+    document.getElementById('board').innerHTML =
+      '<div class="none">Paste your Tasks web app URL into API_URL near the top of this file, then reload.</div>';
+    return;
+  }
+  if(showSpinner) setState('Loading…');
+  try{
+    const all = await apiGet(selectedDate);
+    tasks = all.filter(t => t.date === selectedDate);
+    rosterRows = all.filter(t => t.date === ROSTER_KEY);
+    templates = all.filter(t => String(t.date).indexOf('tpl:') === 0 && t.date !== ROSTER_KEY);
+    setState('');
+  }catch(e){
+    console.error(e);
+    setState(`Load failed: ${e.message}`, true);
+    if(firstLoad) showToast(e.message, null, null, 7000);
+  }
+  firstLoad = false;
+  render();
+}
+
+/* ============================================================
+   Roster — add and remove agents
+   ============================================================ */
+
+function agentList(){
+  // Roster order is the order people were added; anyone who has tasks today
+  // but isn't on the roster still gets a column so nothing is ever hidden.
+  const ordered = rosterRows
+    .slice()
+    .sort((a,b) => String(a.createdAt||'').localeCompare(String(b.createdAt||'')))
+    .map(r => (r.agent || r.title || '').trim())
+    .filter(Boolean);
+
+  const seen = new Set(ordered.map(n => n.toLowerCase()));
+  tasks.forEach(t => {
+    const n = (t.agent || '').trim();
+    if(n && !seen.has(n.toLowerCase())){ seen.add(n.toLowerCase()); ordered.push(n); }
+  });
+  return ordered;
+}
+
+function visibleAgents(){
+  const all = agentList();
+  if(mode === 'mine' && me) return all.filter(n => n === me);
+  return all;
+}
+
+async function addAgent(){
+  const box = document.getElementById('newAgent');
+  const name = (box.value || '').trim();
+  if(!name){ showToast('Type a name first.'); return; }
+
+  if(agentList().some(n => n.toLowerCase() === name.toLowerCase())){
+    showToast(`${name} is already on the board.`);
+    box.value = '';
+    return;
+  }
+
+  const row = {
+    id: uid(), date: ROSTER_KEY, agent: name, title: name,
+    detail:'', priority:'', dueTime:'', status:'roster',
+    completedAt:'', completedBy:'', createdAt: new Date().toISOString(), createdBy: me || ''
+  };
+
+  box.value = '';
+  rosterRows.push(row);
+  render();
+
+  try{
+    await apiPost({ action:'add', task: row });
+    showToast(`${name} added.`);
+  }catch(e){
+    rosterRows = rosterRows.filter(r => r.id !== row.id);
+    render();
+    showToast(`Couldn't add them: ${e.message}`, null, null, 6000);
+  }
+}
+
+function removeAgent(key){
+  const name = AGENT_IDS[key];
+  if(!name) return;
+
+  const theirs = tasks.filter(t => t.agent === name);
+  const note = theirs.length
+    ? `Their <b>${theirs.length} task${theirs.length===1?'':'s'}</b> for this day will be deleted too. Other days stay as they are.`
+    : `They have no tasks on this day.`;
+
+  showConfirm(`Take <b>${escapeHtml(name)}</b> off the board? ${note}`, 'Remove agent', async () => {
+    const rosterIds = rosterRows.filter(r => (r.agent || r.title) === name).map(r => r.id);
+    const taskIds = theirs.map(t => t.id);
+
+    rosterRows = rosterRows.filter(r => (r.agent || r.title) !== name);
+    tasks = tasks.filter(t => t.agent !== name);
+    if(me === name){ me = ''; remember('taskboard_me', ''); }
+    render();
+
+    try{
+      if(rosterIds.concat(taskIds).length){
+        await apiPost({ action:'deleteMany', ids: rosterIds.concat(taskIds) });
+      }
+      showToast(`${name} removed.`);
+    }catch(e){
+      showToast(`Couldn't remove them: ${e.message}`, null, null, 6000);
+      await reload(false);
+    }
+  });
+}
+
+/* ============================================================
+   Line parsing — "Call 25 leads @11:00 !high | detail here"
+   ============================================================ */
+
+function parseLine(line, defaultPriority){
+  let text = String(line || '').trim();
+  if(!text) return null;
+
+  let priority = defaultPriority || 'medium';
+  text = text.replace(/!\s*(critical|high|medium|low)\b/i, (m, p) => { priority = p.toLowerCase(); return ''; });
+
+  let dueTime = '';
+  text = text.replace(/@\s*(\d{1,2}):?(\d{2})\s*(am|pm)?/i, (m, h, mi, ap) => {
+    let hr = parseInt(h, 10);
+    if(ap && /pm/i.test(ap) && hr < 12) hr += 12;
+    if(ap && /am/i.test(ap) && hr === 12) hr = 0;
+    dueTime = String(hr).padStart(2,'0') + ':' + mi;
+    return '';
+  });
+
+  const parts = text.split('|');
+  const title = parts[0].replace(/\s+/g,' ').trim();
+  const detail = parts.slice(1).join('|').replace(/\s+/g,' ').trim();
+
+  if(!title) return null;
+  return { title, detail, priority, dueTime };
+}
+
+function newTask(agent, parsed){
+  return {
+    id: uid(),
+    date: selectedDate,
+    agent,
+    title: parsed.title,
+    detail: parsed.detail || '',
+    priority: parsed.priority || 'medium',
+    dueTime: parsed.dueTime || '',
+    status: 'open',
+    completedAt: '',
+    completedBy: '',
+    createdAt: new Date().toISOString(),
+    createdBy: me || ''
+  };
+}
+
+/* ============================================================
+   Task writes
+   ============================================================ */
+
+async function addOne(key){
+  const agent = AGENT_IDS[key];
+  const box = document.getElementById('add_' + key);
+  if(!agent || !box) return;
+
+  const parsed = parseLine(box.value, 'medium');
+  if(!parsed){ showToast('Type a task first.'); return; }
+
+  const task = newTask(agent, parsed);
+  box.value = '';
+  tasks.push(task);
+  render();
+
+  // Put the cursor back so several tasks can go in without reaching for the mouse.
+  const again = document.getElementById('add_' + key);
+  if(again) again.focus();
+
+  try{
+    await apiPost({ action:'add', task });
+  }catch(e){
+    tasks = tasks.filter(t => t.id !== task.id);
+    render();
+    showToast(`Not saved: ${e.message}`, null, null, 6000);
+  }
+}
+
+async function toggleTask(id){
+  const t = tasks.find(x => String(x.id) === String(id));
+  if(!t) return;
+
+  const before = { status: t.status, completedAt: t.completedAt, completedBy: t.completedBy };
+  const fields = t.status === 'done'
+    ? { status:'open', completedAt:'', completedBy:'' }
+    : { status:'done', completedAt: new Date().toISOString(), completedBy: me || 'Unknown' };
+
+  Object.assign(t, fields);
+  render();
+
+  try{
+    await apiPost({ action:'update', id, fields });
+  }catch(e){
+    Object.assign(t, before);
+    render();
+    showToast(`Couldn't save that: ${e.message}`, null, null, 6000);
+  }
+}
+
+async function deleteTask(id){
+  const t = tasks.find(x => String(x.id) === String(id));
+  if(!t) return;
+
+  const copy = Object.assign({}, t);
+  tasks = tasks.filter(x => String(x.id) !== String(id));
+  render();
+
+  showToast(`Deleted "${copy.title}"`, 'Undo', async () => {
+    tasks.push(copy);
+    render();
+    try{
+      await apiPost({ action:'add', task: copy });
+    }catch(e){
+      showToast(`Couldn't restore it: ${e.message}`, null, null, 6000);
+      await reload(false);
+    }
+  }, 6000);
+
+  try{
+    await apiPost({ action:'delete', id });
+  }catch(e){
+    tasks.push(copy);
+    render();
+    showToast(`Couldn't delete it: ${e.message}`, null, null, 6000);
+  }
+}
+
+async function assignTasks(toEveryone){
+  const raw = document.getElementById('a_lines').value;
+  const defaultPriority = document.getElementById('a_priority').value;
+  const lines = raw.split('\n').map(l => parseLine(l, defaultPriority)).filter(Boolean);
+
+  if(lines.length === 0){ showToast('Type at least one task line first.'); return; }
+
+  const agents = toEveryone ? agentList() : [document.getElementById('a_agent').value];
+  if(!agents[0]){ showToast('Add an agent to the board first.'); return; }
+
+  const batch = [];
+  agents.forEach(agent => lines.forEach(l => batch.push(newTask(agent, l))));
+
+  setState('Assigning…');
+  try{
+    await apiPost({ action:'addMany', tasks: batch });
+    document.getElementById('a_lines').value = '';
+    setState('');
+    showToast(`${batch.length} task${batch.length===1?'':'s'} assigned.`);
+    await reload(false);
+  }catch(e){
+    setState(`Save failed: ${e.message}`, true);
+    showToast(`Not saved: ${e.message}`, null, null, 6000);
+  }
+}
+
+async function carryOver(){
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  const prev = d.toISOString().slice(0,10);
+
+  setState('Checking yesterday…');
+  try{
+    const prevTasks = (await apiGet(prev)).filter(t => t.date === prev && t.status !== 'done');
+    if(prevTasks.length === 0){
+      setState('');
+      showToast(`Nothing unfinished on ${prev}.`);
+      return;
+    }
+    const batch = prevTasks.map(t => newTask(t.agent, {
+      title: t.title, detail: t.detail, priority: t.priority, dueTime: t.dueTime
+    }));
+    await apiPost({ action:'addMany', tasks: batch });
+    setState('');
+    showToast(`Carried ${batch.length} task${batch.length===1?'':'s'} over from ${prev}.`);
+    await reload(false);
+  }catch(e){
+    setState(`Carry-over failed: ${e.message}`, true);
+    showToast(e.message, null, null, 6000);
+  }
+}
+
+/* ---------------- templates ---------------- */
+
+function saveTemplate(){
+  const raw = document.getElementById('a_lines').value;
+  const defaultPriority = document.getElementById('a_priority').value;
+  const lines = raw.split('\n').map(l => parseLine(l, defaultPriority)).filter(Boolean);
+  if(lines.length === 0){ showToast('Type the task lines you want to save first.'); return; }
+
+  showPrompt('Name this template', 'Morning routine', async (name) => {
+    const key = 'tpl:' + name;
+    if(key === ROSTER_KEY){ showToast('Pick a different name.'); return; }
+    const batch = lines.map(l => ({
+      id: uid(), date: key, agent:'', title: l.title, detail: l.detail,
+      priority: l.priority, dueTime: l.dueTime, status:'template',
+      completedAt:'', completedBy:'', createdAt: new Date().toISOString(), createdBy: me || ''
+    }));
+    try{
+      await apiPost({ action:'addMany', tasks: batch });
+      showToast(`Template "${name}" saved.`);
+      await reload(false);
+    }catch(e){
+      showToast(`Not saved: ${e.message}`, null, null, 6000);
+    }
+  });
+}
+
+async function applyTemplate(toEveryone){
+  const key = document.getElementById('tplPicker').value;
+  if(!key){ showToast('Pick a template first.'); return; }
+
+  const rows = templates.filter(t => t.date === key);
+  if(rows.length === 0){ showToast('That template is empty.'); return; }
+
+  const agents = toEveryone ? agentList() : [document.getElementById('a_agent').value];
+  if(!agents[0]){ showToast('Add an agent to the board first.'); return; }
+
+  const batch = [];
+  agents.forEach(agent => rows.forEach(r => batch.push(newTask(agent, {
+    title: r.title, detail: r.detail, priority: r.priority, dueTime: r.dueTime
+  }))));
+
+  try{
+    await apiPost({ action:'addMany', tasks: batch });
+    showToast(`Applied "${key.slice(4)}" — ${batch.length} task${batch.length===1?'':'s'} added.`);
+    await reload(false);
+  }catch(e){
+    showToast(`Not saved: ${e.message}`, null, null, 6000);
+  }
+}
+
+function deleteTemplate(){
+  const key = document.getElementById('tplPicker').value;
+  if(!key){ showToast('Pick a template first.'); return; }
+  const ids = templates.filter(t => t.date === key).map(t => t.id);
+  const name = key.slice(4);
+
+  showConfirm(`Delete the template <b>${escapeHtml(name)}</b>? Tasks already assigned from it stay put.`, 'Delete template', async () => {
+    try{
+      await apiPost({ action:'deleteMany', ids });
+      showToast('Template deleted.');
+      await reload(false);
+    }catch(e){
+      showToast(`Couldn't delete it: ${e.message}`, null, null, 6000);
+    }
+  });
+}
+
+/* ============================================================
+   Rendering
+   ============================================================ */
+
+function isLate(t){
+  if(t.status === 'done' || !t.dueTime) return false;
+  if(selectedDate < todayStr()) return true;
+  if(selectedDate > todayStr()) return false;
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  return t.dueTime < hhmm;
+}
+
+function fmtTime(iso){
+  try{ return new Date(iso).toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' }); }
+  catch(e){ return ''; }
+}
+
+function prettyTime(hhmm){
+  const bits = String(hhmm).split(':');
+  const h = parseInt(bits[0], 10);
+  const m = bits[1] || '00';
+  if(isNaN(h)) return hhmm;
+  const ap = h >= 12 ? 'pm' : 'am';
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr}:${m}${ap}`;
+}
+
+function renderDayLabel(){
+  const d = new Date(selectedDate + 'T00:00:00');
+  const isToday = selectedDate === todayStr();
+  document.getElementById('dayLabel').childNodes[0].nodeValue =
+    isToday ? 'Today' : d.toLocaleDateString('en-US', { weekday:'long' });
+  document.getElementById('daySub').textContent =
+    d.toLocaleDateString('en-US', { month:'long', day:'numeric', year:'numeric' });
+  document.getElementById('dayPicker').value = selectedDate;
+}
+
+function renderHero(){
+  const shown = tasks.filter(t => mode !== 'mine' || !me || t.agent === me);
+  const done = shown.filter(t => t.status === 'done').length;
+  const late = shown.filter(isLate).length;
+  const pct = shown.length ? Math.round((done / shown.length) * 100) : 0;
+
+  document.getElementById('heroNum').innerHTML = `${done}<span> / ${shown.length} done</span>`;
+  document.getElementById('heroBar').style.width = pct + '%';
+
+  const who = mode === 'mine' && me ? me : 'the team';
+  document.getElementById('heroLab').innerHTML = shown.length === 0
+    ? `Nothing assigned to ${escapeHtml(who)} yet`
+    : `${pct}% of ${escapeHtml(who)}'s day` + (late ? ` &middot; <span class="late">${late} past due</span>` : '');
+}
+
+function taskCard(t){
+  const done = t.status === 'done';
+  const late = isLate(t);
+  return `
+    <div class="tcard p-${escapeHtml(t.priority || 'medium')} ${done ? 'done' : ''}" onclick="toggleTask('${t.id}')">
+      <button class="check" tabindex="-1">&#10003;</button>
+      <div class="t-body">
+        <div class="t-title">${escapeHtml(t.title)}</div>
+        ${t.detail ? `<div class="t-detail">${escapeHtml(t.detail)}</div>` : ''}
+        <div class="t-meta">
+          ${t.dueTime ? `<span class="due ${late ? 'late' : ''}">by ${escapeHtml(prettyTime(t.dueTime))}${late ? ' · late' : ''}</span>` : ''}
+          ${done && t.completedBy ? `<span class="who">&#10003; ${escapeHtml(t.completedBy)}${t.completedAt ? ' at ' + fmtTime(t.completedAt) : ''}</span>` : ''}
+        </div>
+      </div>
+      <button class="kill-task" title="Delete task" onclick="event.stopPropagation();deleteTask('${t.id}')">&#10005;</button>
+    </div>`;
+}
+
+function agentColumn(name){
+  const key = agentKey(name);
+  const mine = tasks.filter(t => t.agent === name)
+    .sort((a,b) => (a.status === 'done') - (b.status === 'done')
+      || (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'));
+  const done = mine.filter(t => t.status === 'done').length;
+  const late = mine.filter(isLate).length;
+  const pct = mine.length ? Math.round((done / mine.length) * 100) : 0;
+  const clear = mine.length > 0 && done === mine.length;
+
+  return `
+    <div class="col ${clear ? 'clear' : ''} ${name === me ? 'me' : ''}">
+      <div class="col-head">
+        <div class="line">
+          <span class="nm" title="${escapeHtml(name)}">${escapeHtml(name)}</span>
+          <button class="kill" title="Remove ${escapeHtml(name)}" onclick="removeAgent('${key}')">&#10005;</button>
+        </div>
+        <div class="score">
+          <b>${done}</b><span>of ${mine.length} done</span>
+          ${late ? `<span class="late">${late} late</span>` : ''}
+        </div>
+        <div class="minibar"><i style="width:${pct}%"></i></div>
+      </div>
+      <div class="col-tasks">
+        ${mine.length ? mine.map(taskCard).join('') : '<div class="col-empty">No tasks yet</div>'}
+      </div>
+      <div class="col-foot">
+        <div class="addrow">
+          <input id="add_${key}" placeholder="Add a task…" onkeydown="if(event.key==='Enter'){addOne('${key}')}">
+          <button class="btn" onclick="addOne('${key}')">Add</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function addAgentColumn(){
+  return `
+    <div class="col addcol">
+      <h3>Add an agent</h3>
+      <p>They get their own column, on every day.</p>
+      <div class="addrow">
+        <input id="newAgent" placeholder="Name" onkeydown="if(event.key==='Enter'){addAgent()}">
+        <button class="btn" onclick="addAgent()">Add</button>
+      </div>
+    </div>`;
+}
+
+function render(){
+  const names = agentList();
+
+  const agentSel = document.getElementById('a_agent');
+  const keepAgent = agentSel.value;
+  agentSel.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  if(names.indexOf(keepAgent) >= 0) agentSel.value = keepAgent;
+
+  const whoSel = document.getElementById('whoAmI');
+  whoSel.innerHTML = '<option value="">choose your name</option>' +
+    names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  whoSel.value = names.indexOf(me) >= 0 ? me : '';
+
+  const tplSel = document.getElementById('tplPicker');
+  const keepTpl = tplSel.value;
+  const tplNames = Array.from(new Set(templates.map(t => t.date)));
+  tplSel.innerHTML = '<option value="">No template selected</option>' +
+    tplNames.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k.slice(4))}</option>`).join('');
+  if(tplNames.indexOf(keepTpl) >= 0) tplSel.value = keepTpl;
+
+  document.querySelectorAll('#modeSeg button').forEach(b =>
+    b.classList.toggle('on', b.dataset.mode === mode));
+
+  document.getElementById('toolToggle').style.display = mode === 'team' ? '' : 'none';
+  if(mode !== 'team'){
+    toolsOpen = false;
+    document.getElementById('tools').style.display = 'none';
+    document.getElementById('toolToggle').textContent = 'Show more tools';
+  }
+
+  renderDayLabel();
+  renderHero();
+
+  const board = document.getElementById('board');
+  const shown = visibleAgents();
+
+  if(mode === 'mine'){
+    board.innerHTML = shown.length
+      ? shown.map(agentColumn).join('')
+      : '<div class="none">Pick your name in the box above to see your column.</div>';
+    return;
+  }
+
+  board.innerHTML = shown.map(agentColumn).join('') + addAgentColumn();
+}
+
+/* ============================================================
+   Copy summary
+   ============================================================ */
+
+function copySummary(){
+  const agents = visibleAgents();
+  const label = new Date(selectedDate + 'T00:00:00')
+    .toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric' });
+
+  let html = `<div style="font-family:Calibri,Arial,sans-serif;"><div>✅ <b>Task completion — ${escapeHtml(label)}</b></div><br>`;
+  let plain = `✅ Task completion — ${label}\n\n`;
+
+  agents.forEach(n => {
+    const mine = tasks.filter(t => t.agent === n);
+    if(mine.length === 0) return;
+    const done = mine.filter(t => t.status === 'done').length;
+    const openOnes = mine.filter(t => t.status !== 'done').map(t => t.title);
+    html += `<div>• <b>${escapeHtml(n)}</b> — ${done}/${mine.length} done${openOnes.length ? ` (open: <i>${escapeHtml(openOnes.join(', '))}</i>)` : ''}</div>`;
+    plain += `• ${n} — ${done}/${mine.length} done${openOnes.length ? ` (open: ${openOnes.join(', ')})` : ''}\n`;
+  });
+  html += `</div>`;
+
+  copyRich(html, plain);
+}
+
+function copyRich(html, plain){
+  const flash = () => {
+    const btn = document.getElementById('copyBoardBtn');
+    if(!btn) return;
+    const original = btn.textContent;
+    btn.textContent = 'Copied — paste into Teams';
+    setTimeout(() => { btn.textContent = original; }, 2000);
+  };
+
+  if(navigator.clipboard && window.ClipboardItem){
+    try{
+      navigator.clipboard.write([new ClipboardItem({
+        'text/html': new Blob([html], {type:'text/html'}),
+        'text/plain': new Blob([plain], {type:'text/plain'})
+      })]).then(flash).catch(() => fallbackCopy(html, flash));
+      return;
+    }catch(e){ /* falls through to the manual path */ }
+  }
+  fallbackCopy(html, flash);
+}
+
+function fallbackCopy(html, flash){
+  const holder = document.createElement('div');
+  holder.contentEditable = 'true';
+  holder.style.cssText = 'position:fixed;top:-9999px;left:-9999px;';
+  holder.innerHTML = html;
+  document.body.appendChild(holder);
+  const range = document.createRange();
+  range.selectNodeContents(holder);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+  let ok = false;
+  try{ ok = document.execCommand('copy'); }catch(e){ ok = false; }
+  sel.removeAllRanges();
+  document.body.removeChild(holder);
+  if(ok) flash(); else showToast('Copy is blocked here — select the board text manually.');
+}
+
+/* ============================================================
+   Controls
+   ============================================================ */
+
+function goToday(){
+  selectedDate = todayStr();
+  reload(true);
+}
+
+function shiftDay(n){
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  selectedDate = d.toISOString().slice(0,10);
+  reload(true);
+}
+
+function setMode(m){
+  mode = m;
+  remember('taskboard_mode', m);
+  render();
+}
+
+function toggleTools(){
+  toolsOpen = !toolsOpen;
+  document.getElementById('tools').style.display = toolsOpen ? '' : 'none';
+  document.getElementById('toolToggle').textContent = toolsOpen ? 'Hide tools' : 'Show more tools';
+}
+
+document.getElementById('dayPicker').addEventListener('change', e => {
+  selectedDate = e.target.value || todayStr();
+  reload(true);
+});
+
+document.getElementById('whoAmI').addEventListener('change', e => {
+  me = e.target.value;
+  remember('taskboard_me', me);
+  render();
+});
+
+/* ============================================================
+   Start
+   ============================================================ */
+
+(function init(){
+  const params = new URLSearchParams(location.search);
+  me = params.get('agent') || recall('taskboard_me') || '';
+  mode = params.get('mode') || recall('taskboard_mode') || 'team';
+  if(me && !params.get('mode') && !recall('taskboard_mode')) mode = 'mine';
+
+  renderDayLabel();
+  render();
+  reload(true);
+})();
+
+setInterval(() => {
+  // Don't pull fresh data out from under someone who's mid-typing or mid-save.
+  const el = document.activeElement;
+  const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA');
+  if(isSaving || typing) return;
+  reload(false);
+}, REFRESH_MS);
+</script>
+</body>
+</html>
