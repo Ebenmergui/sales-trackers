@@ -310,7 +310,7 @@ textarea{resize:vertical;}
    ============================================================ */
 
 // Paste the /exec URL of the Tasks Apps Script deployment here.
-const API_URL = 'PASTE_YOUR_TASKS_EXEC_URL_HERE';
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1lnsh7QZqvF8YcGF2c7l4fP8mWCXMJaOp8xjXPdVgm0M0AHM4e0ZahE_xfWyg7C7-/exec';
 
 // Must match API_KEY in the Apps Script.
 const API_KEY = 'miami-tasks-2026';
