@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sales Floor — TV</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B1420; --surface:#121C2B; --surface-2:#1A2740; --border:#23324A;
+  --text:#E7ECF3; --muted:#8496B0; --accent:#33D6A6; --amber:#FFB35C;
+  --blue:#6C8CFF; --danger:#FF6B6B; --gold:#FFD66B; --silver:#C9D3E0; --bronze:#E0A370;
+}
+/* Everything is sized in rem, and 1rem scales with the screen so the layout
+   fills any TV (1080p, 4K, or a laptop) without scrolling. */
+html{font-size:min(0.8333vw, 1.4815vh);}
+*{box-sizing:border-box;}
+body{margin:0;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;cursor:none;}
+body.show-cursor{cursor:default;}
+.num{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;}
+h1,h2,h3{font-family:'Space Grotesk','Inter',sans-serif;margin:0;font-weight:600;}
+
+#screen{height:100vh;padding:2.2rem 2.8rem;display:grid;grid-template-rows:auto auto 1fr;gap:1.8rem;}
+
+/* ---------- Header ---------- */
+header{display:flex;justify-content:space-between;align-items:center;}
+header h1{font-size:3.2rem;letter-spacing:-0.02em;display:flex;align-items:center;gap:1.2rem;}
+.live{display:inline-flex;align-items:center;gap:.6rem;font-size:1.3rem;font-family:'Inter';font-weight:600;
+  color:var(--accent);border:2px solid #1E5C4B;border-radius:3rem;padding:.35rem 1.1rem;}
+.live i{width:.8rem;height:.8rem;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;}
+.live.off{color:var(--danger);border-color:#5C1E1E;}
+.live.off i{background:var(--danger);animation:none;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(51,214,166,.5);}50%{box-shadow:0 0 0 .6rem rgba(51,214,166,0);}}
+.clock{text-align:right;}
+.clock .time{font-size:3.6rem;font-weight:700;line-height:1;}
+.clock .date{font-size:1.5rem;color:var(--muted);margin-top:.3rem;}
+
+/* ---------- KPI strip ---------- */
+.kpis{display:grid;grid-template-columns:1.25fr 1.25fr 1.25fr 1fr 1fr;gap:1.4rem;}
+.kpi{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;padding:1.1rem 1.8rem;}
+.kpi .label{font-size:1.5rem;color:var(--muted);font-weight:500;}
+.kpi .value{font-size:5.2rem;font-weight:700;line-height:1.05;margin-top:.2rem;}
+.kpi.small .value{font-size:4rem;}
+.kpi .sub{font-size:1.35rem;color:var(--muted);margin-top:.2rem;}
+.kpi.today{border-color:#1E5C4B;background:linear-gradient(180deg,rgba(51,214,166,.08),var(--surface) 70%);}
+.c-accent{color:var(--accent);} .c-blue{color:var(--blue);} .c-amber{color:var(--amber);}
+
+/* ---------- Main area ---------- */
+main{display:grid;grid-template-columns:1.55fr 1fr;gap:1.8rem;min-height:0;}
+.panel{background:var(--surface);border:2px solid var(--border);border-radius:1.2rem;padding:1.3rem 1.9rem;
+  display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.9rem;}
+.panel-head h2{font-size:2.3rem;}
+.panel-head .hint{font-size:1.35rem;color:var(--muted);}
+.side{display:grid;grid-template-rows:auto 1fr;gap:1.8rem;min-height:0;}
+
+/* Leaderboard */
+.tabs{display:flex;gap:.6rem;}
+.tab{font-size:1.35rem;padding:.35rem 1.1rem;border-radius:2rem;color:var(--muted);border:2px solid var(--border);position:relative;overflow:hidden;}
+.tab.on{color:#06231b;background:var(--accent);border-color:var(--accent);font-weight:600;}
+.tab.on::after{content:"";position:absolute;left:0;bottom:0;height:.25rem;background:rgba(6,35,27,.45);
+  width:0;animation:fill var(--rot,20s) linear forwards;}
+@keyframes fill{to{width:100%;}}
+.lb-cols{display:grid;grid-template-columns:4rem 1fr 8rem 8rem 7rem;gap:1.2rem;font-size:1.3rem;color:var(--muted);
+  padding:0 0 .6rem;border-bottom:2px solid var(--border);}
+.lb-cols span:nth-child(n+3){text-align:right;}
+#lbBody{flex:1;display:flex;flex-direction:column;min-height:0;}
+.lb-row{display:grid;grid-template-columns:4rem 1fr 8rem 8rem 7rem;gap:1.2rem;align-items:center;
+  padding:.75rem 0;border-bottom:1px solid var(--border);}
+.lb-row:last-child{border-bottom:none;}
+.rank{font-family:'Space Grotesk';font-size:2.6rem;font-weight:700;color:var(--muted);text-align:center;}
+.lb-row.r1 .rank{color:var(--gold);} .lb-row.r2 .rank{color:var(--silver);} .lb-row.r3 .rank{color:var(--bronze);}
+.who .name{font-size:2.3rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lb-row.r1 .who .name{font-size:2.7rem;}
+.bar{height:.9rem;background:var(--surface-2);border-radius:1rem;margin-top:.55rem;overflow:hidden;}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:1rem;transition:width .8s ease;}
+.lb-row.r1 .bar i{background:linear-gradient(90deg,var(--accent),var(--gold));}
+.stat-cell{text-align:right;font-size:2.8rem;font-weight:700;}
+.stat-cell.u{color:var(--accent);} .stat-cell.v{color:var(--amber);} .stat-cell.s{color:var(--text);font-size:2.3rem;}
+.empty{flex:1;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--muted);font-size:2rem;line-height:1.4;}
+
+/* Product mix */
+.mix{display:grid;grid-template-columns:1fr 1fr;gap:.4rem 1.6rem;}
+.mix-item{display:flex;justify-content:space-between;align-items:baseline;font-size:1.5rem;padding:.2rem 0;border-bottom:1px solid var(--border);}
+.mix-item b{font-size:1.8rem;}
+.mix-item.unit b{color:var(--accent);} .mix-item.voice b{color:var(--amber);}
+.mix-empty{color:var(--muted);font-size:1.6rem;}
+
+/* Latest sales feed */
+#feed{flex:1;display:flex;flex-direction:column;gap:.6rem;min-height:0;overflow:hidden;}
+.sale{background:var(--surface-2);border-left:.4rem solid var(--accent);border-radius:.7rem;padding:.65rem 1.2rem;flex-shrink:0;}
+.sale.fresh{animation:flash 2.4s ease-out;}
+@keyframes flash{0%{background:rgba(51,214,166,.35);}100%{background:var(--surface-2);}}
+.sale .top{display:flex;justify-content:space-between;gap:1rem;font-size:1.8rem;font-weight:600;}
+.sale .top .co{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sale .top .closer{color:var(--accent);white-space:nowrap;}
+.sale .what{font-size:1.45rem;color:var(--muted);margin-top:.25rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Status line */
+#status{position:fixed;left:2.8rem;bottom:.6rem;font-size:1.1rem;color:var(--muted);}
+/* Lists never scroll — anything that doesn't fit is trimmed off by fitToBox() */
+#lbBody,#feed,#mix{overflow:hidden;}
+
+/* Celebration banner when a new sale lands */
+#celebrate{position:fixed;left:50%;top:1.6rem;transform:translate(-50%,-250%);visibility:hidden;background:var(--accent);color:#06231b;
+  font-family:'Space Grotesk';font-weight:700;font-size:2.6rem;padding:1rem 2.4rem;border-radius:1rem;
+  box-shadow:0 1rem 3rem rgba(0,0,0,.5);transition:transform .6s cubic-bezier(.2,.9,.3,1.2);z-index:10;white-space:nowrap;}
+#celebrate.show{transform:translate(-50%,0);visibility:visible;}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;}
+}
+</style>
+</head>
+<body>
+<div id="screen">
+  <header>
+    <h1>Miami Sales <span class="live" id="live"><i></i><span id="liveText">Live</span></span></h1>
+    <div class="clock">
+      <div class="time num" id="clockTime">--:--</div>
+      <div class="date" id="clockDate"></div>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Leaderboard</h2>
+        <div class="tabs" id="tabs">
+          <span class="tab" data-view="today">Today</span>
+          <span class="tab" data-view="week">This week</span>
+          <span class="tab" data-view="month">This month</span>
+        </div>
+      </div>
+      <div class="lb-cols"><span></span><span>Closer</span><span>Units</span><span>Voice</span><span>Sales</span></div>
+      <div id="lbBody"></div>
+    </section>
+
+    <div class="side">
+      <section class="panel">
+        <div class="panel-head"><h2>Today's product mix</h2><span class="hint" id="mixHint"></span></div>
+        <div id="mix"></div>
+      </section>
+      <section class="panel">
+        <div class="panel-head"><h2>Latest sales</h2><span class="hint" id="feedHint"></span></div>
+        <div id="feed"></div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div id="status"></div>
+<div id="celebrate"></div>
+
+<script>
+// ===== Settings =====
+// Same backend as the Team Sales Tracker. This screen only READS — it never writes.
+const API_URL = 'https://script.google.com/macros/s/AKfycbw8T45gynFK9EZbEB_8204n14Ff9XRACPollLwW85FWWmG4kbGnGq5cJlcItdG0seEk/exec';
+const API_KEY = 'miami123';
+const REFRESH_SECONDS = 30;      // how often to pull new sales
+const ROTATE_SECONDS = 20;       // how long each leaderboard view (Today / Week / Month) stays up
+const LEADERBOARD_ROWS = 10;     // max closers shown (extra rows are trimmed to fit the screen)
+const FEED_ROWS = 8;             // max recent sales shown (trimmed to fit the screen)
+
+// ===== Product recognition (identical rules to the Team Sales Tracker) =====
+const PRODUCT_ALIASES = {
+  '5G 100M': ['5g 100m'], '5G 200M': ['5g 200m'],
+  'FiOS 300M': ['fios 300m'], 'FiOS 500M': ['fios 500m'], 'FiOS 1G': ['fios 1g'], 'FiOS 2G': ['fios 2g'],
+  'One Talk': ['one talk', 'onetalk'],
+  'One Talk Mobile App': ['one talk mobile app', 'onetalk mobile app', 'one talk mobile', 'onetalk mobile'],
+  'MyBiz line': ['mybiz line', 'mybiz'],
+  'Smartphone Device (iPhone, Samsung, etc)': ['smartphone', 'iphone', 'samsung'],
+  '4G 25M': ['4g 25m'],
+  'BDV New': ['bdv new'],
+  'BDV Winback': ['bdv winback', 'bdv wb', 'bdv win back']
+};
+const SHORT_NAME = { 'Smartphone Device (iPhone, Samsung, etc)': 'Smartphone' };
+const UNIT_TYPES = new Set(['5G 100M','5G 200M','4G 25M','FiOS 300M','FiOS 500M','FiOS 1G','FiOS 2G']);
+
+function normalizeProductText(str){
+  if(!str) return '';
+  let s = String(str).toLowerCase();
+  s = s.replace(/(\d+)\s*mbps\b/g, '$1m');
+  s = s.replace(/(\d+)\s*gbps\b/g, '$1g');
+  s = s.replace(/(\d)\s*x\b/g, '$1 x ');
+  s = s.replace(/\bx\s*(\d)/g, ' x $1');
+  s = s.replace(/[^a-z0-9]+/g, ' ');
+  s = s.replace(/\bmy\s*biz\b/g, 'mybiz');
+  s = s.replace(/\bbvd\b/g, 'bdv');
+  s = s.replace(/\b(\d+)000\s*m\b/g, '$1g');
+  return s.replace(/\s+/g, ' ').trim();
+}
+function matchProductInSegment(norm){
+  let best = null;
+  Object.entries(PRODUCT_ALIASES).forEach(([key, aliases]) => {
+    aliases.forEach(alias => {
+      const re = new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}s?\\b`);
+      const m = re.exec(norm);
+      if(m && (!best || alias.length > best.aliasLen)){
+        best = { key, start: m.index, end: m.index + m[0].length, aliasLen: alias.length };
+      }
+    });
+  });
+  return best;
+}
+function findProductMentions(raw){
+  if(!raw) return [];
+  const found = [];
+  String(raw).split(/[,;\n]+|\s\+\s|\s+and\s+/i).map(x=>x.trim()).filter(Boolean).forEach(seg=>{
+    const norm = normalizeProductText(seg);
+    const match = norm && matchProductInSegment(norm);
+    if(!match) return;
+    const rest = (norm.slice(0, match.start) + ' ' + norm.slice(match.end)).trim();
+    const q = rest.match(/\b(\d{1,2})\b/);
+    found.push({ type: match.key, qty: q ? parseInt(q[1], 10) : 1 });
+  });
+  return found;
+}
+// Notes win per product; Units Sold only fills products Notes never mentions; BDV from Notes only.
+function saleLines(s){
+  const unitsM = findProductMentions(s.units || '');
+  const notesM = findProductMentions(s.notes || '');
+  const notesTypes = new Set(notesM.map(m => m.type));
+  const all = [...notesM, ...unitsM.filter(m => !notesTypes.has(m.type))];
+  const main = all.filter(m => m.type !== 'BDV New' && m.type !== 'BDV Winback');
+  const lines = [];
+  if(main.length) lines.push(...main);
+  else if(all.length === 0){
+    const t = (s.units && s.units.trim()) ? s.units.trim() : 'Unspecified';
+    const src = (s.notes && s.notes.trim()) ? s.notes : (s.units || '');
+    const m = src.match(/(\d+)\s*x\b/i);
+    lines.push({ type: t, qty: m ? parseInt(m[1], 10) : 1 });
+  }
+  lines.push(...notesM.filter(m => m.type === 'BDV New' || m.type === 'BDV Winback'));
+  return lines;
+}
+function split(s){
+  let units = 0, voice = 0;
+  saleLines(s).forEach(l => { if(UNIT_TYPES.has(l.type)) units += l.qty; else voice += l.qty; });
+  return { units, voice };
+}
+
+// ===== Dates =====
+// Uses the same date format as the Team Sales Tracker so "today" matches what agents see there.
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function weekRange(){
+  const d = new Date(todayStr() + 'T00:00:00');
+  const day = d.getDay();
+  const mon = new Date(d); mon.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  return { start: mon.toISOString().slice(0,10), end: sun.toISOString().slice(0,10) };
+}
+function periodEntries(view){
+  const t = todayStr();
+  if(view === 'today') return sales.filter(s => s.entryDate === t);
+  if(view === 'week'){ const {start,end} = weekRange(); return sales.filter(s => s.entryDate && s.entryDate >= start && s.entryDate <= end); }
+  return sales.filter(s => s.entryDate && s.entryDate.startsWith(t.slice(0,7)));
+}
+function totals(entries){
+  let units = 0, voice = 0;
+  entries.forEach(s => { const x = split(s); units += x.units; voice += x.voice; });
+  return { sales: entries.length, units, voice };
+}
+
+function esc(str){
+  return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function plural(n, word){ return `${n} ${word}${n === 1 ? '' : 's'}`; }
+
+// ===== State =====
+let sales = [];
+let knownIds = null;          // ids seen on the previous refresh — used to spot brand-new sales
+let freshIds = new Set();
+const VIEWS = ['today','week','month'];
+let viewIdx = 0;
+let lastOk = null;
+
+// ===== Data =====
+async function load(){
+  try{
+    const res = await fetch(`${API_URL}?action=list&key=${encodeURIComponent(API_KEY)}&_=${Date.now()}`,
+      { method:'GET', redirect:'follow', cache:'no-store' });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Backend returned an error');
+    const incoming = Array.isArray(data.sales) ? data.sales : [];
+
+    const ids = new Set(incoming.map(s => String(s.id)));
+    freshIds = new Set();
+    if(knownIds){
+      const newOnes = incoming.filter(s => !knownIds.has(String(s.id)));
+      newOnes.forEach(s => freshIds.add(String(s.id)));
+      if(newOnes.length) celebrate(newOnes[newOnes.length - 1]);
+    }
+    knownIds = ids;
+    sales = incoming;
+    lastOk = new Date();
+    setLive(true);
+    render();
+  }catch(e){
+    console.error('Load failed', e);
+    setLive(false, e.message);
+  }
+}
+
+function setLive(ok, msg){
+  document.getElementById('live').classList.toggle('off', !ok);
+  document.getElementById('liveText').textContent = ok ? 'Live' : 'Reconnecting';
+  const when = lastOk ? lastOk.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : 'never';
+  document.getElementById('status').textContent = ok
+    ? `Updated ${when} · refreshes every ${REFRESH_SECONDS}s`
+    : `Can't reach the sales sheet (${msg}). Showing data from ${when}. Retrying automatically.`;
+}
+
+// ===== Render =====
+// Removes items from the bottom of a list until it fits its box exactly — so on a fixed
+// signage screen a row is either fully visible or not shown at all (never half cut off).
+function fitToBox(box){
+  if(!box) return;
+  const kids = Array.from(box.children);
+  for(let i = kids.length - 1; i > 0 && box.scrollHeight > box.clientHeight + 1; i--){
+    kids[i].remove();
+  }
+}
+function fitMix(){
+  const grid = document.querySelector('#mix .mix');
+  if(!grid) return;
+  const panel = grid.closest('.panel');
+  const kids = Array.from(grid.children);
+  for(let i = kids.length - 1; i > 0 && panel.scrollHeight > panel.clientHeight + 1; i--){
+    kids[i].remove();
+  }
+}
+function render(){
+  renderKpis();
+  renderLeaderboard();
+  renderMix();
+  renderFeed();
+}
+
+function renderKpis(){
+  const d = totals(periodEntries('today'));
+  const w = totals(periodEntries('week'));
+  const m = totals(periodEntries('month'));
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi today"><div class="label">Sales today</div><div class="value num">${d.sales}</div></div>
+    <div class="kpi today"><div class="label">Units today</div><div class="value num c-accent">${d.units}</div><div class="sub">FiOS, 5G, 4G</div></div>
+    <div class="kpi today"><div class="label">Voice lines today</div><div class="value num c-amber">${d.voice}</div><div class="sub">One Talk, MyBiz, BDV, devices</div></div>
+    <div class="kpi small"><div class="label">This week</div><div class="value num c-blue">${w.units}</div><div class="sub">${plural(w.units,'unit')}, ${plural(w.voice,'voice line')}</div></div>
+    <div class="kpi small"><div class="label">This month</div><div class="value num c-blue">${m.units}</div><div class="sub">${plural(m.units,'unit')}, ${plural(m.voice,'voice line')}</div></div>
+  `;
+}
+
+function renderLeaderboard(){
+  const view = VIEWS[viewIdx];
+  document.querySelectorAll('.tab').forEach(t => {
+    const on = t.dataset.view === view;
+    t.classList.toggle('on', on);
+    // restart the progress sweep on the active tab
+    if(on){ t.style.animation = 'none'; t.offsetHeight; t.style.animation = ''; }
+  });
+  document.documentElement.style.setProperty('--rot', ROTATE_SECONDS + 's');
+
+  const by = {};
+  periodEntries(view).forEach(s => {
+    const c = (s.closers || '').trim() || 'Unassigned';
+    if(!by[c]) by[c] = { sales:0, units:0, voice:0 };
+    const x = split(s);
+    by[c].sales += 1; by[c].units += x.units; by[c].voice += x.voice;
+  });
+  const rows = Object.entries(by)
+    .sort((a,b) => b[1].units - a[1].units || b[1].voice - a[1].voice || b[1].sales - a[1].sales)
+    .slice(0, LEADERBOARD_ROWS);
+
+  const body = document.getElementById('lbBody');
+  if(!rows.length){
+    const label = view === 'today' ? 'today' : view === 'week' ? 'this week' : 'this month';
+    body.innerHTML = `<div class="empty">No sales logged ${label} yet.<br>First one on the board wins the morning.</div>`;
+    return;
+  }
+  const max = Math.max(1, ...rows.map(([,v]) => v.units + v.voice * 0.25));
+  body.innerHTML = rows.map(([name, v], i) => {
+    const pct = Math.max(3, Math.round(((v.units + v.voice * 0.25) / max) * 100));
+    return `
+      <div class="lb-row r${i+1}">
+        <div class="rank">${i+1}</div>
+        <div class="who"><div class="name">${esc(name)}</div><div class="bar"><i style="width:${pct}%"></i></div></div>
+        <div class="stat-cell u num">${v.units}</div>
+        <div class="stat-cell v num">${v.voice}</div>
+        <div class="stat-cell s num">${v.sales}</div>
+      </div>`;
+  }).join('');
+  fitToBox(body);
+}
+
+function renderMix(){
+  const byType = {};
+  periodEntries('today').forEach(s => saleLines(s).forEach(l => { byType[l.type] = (byType[l.type] || 0) + l.qty; }));
+  const list = Object.entries(byType).sort((a,b) => b[1] - a[1]).slice(0, 6);
+  const box = document.getElementById('mix');
+  document.getElementById('mixHint').innerHTML =
+    `<span class="c-accent">■</span> units &nbsp; <span class="c-amber">■</span> voice`;
+  if(!list.length){ box.innerHTML = `<div class="mix-empty">Products appear here as today's sales come in.</div>`; return; }
+  box.innerHTML = `<div class="mix">${list.map(([t,q]) =>
+    `<div class="mix-item ${UNIT_TYPES.has(t) ? 'unit' : 'voice'}"><span>${esc(SHORT_NAME[t] || t)}</span><b class="num">${q}</b></div>`
+  ).join('')}</div>`;
+  fitMix();
+}
+
+function renderFeed(){
+  const t = todayStr();
+  let list = sales.filter(s => s.entryDate === t);
+  let label = 'today';
+  if(!list.length){ list = sales.slice(); label = 'most recent'; }
+  // The sheet keeps sales in the order they were logged, so the end of the list is newest.
+  list = list.slice(-FEED_ROWS).reverse();
+  document.getElementById('feedHint').textContent = label === 'today' ? '' : 'none yet today — showing most recent';
+  const box = document.getElementById('feed');
+  if(!list.length){ box.innerHTML = `<div class="empty">No sales in the sheet yet.</div>`; return; }
+  box.innerHTML = list.map(s => {
+    const what = saleLines(s).map(l => `${l.qty > 1 ? l.qty + ' × ' : ''}${SHORT_NAME[l.type] || l.type}`).join(', ');
+    const where = s.company || s.customer || 'New sale';
+    const dateBit = label === 'today' ? '' : ` · ${s.entryDate || ''}`;
+    return `
+      <div class="sale ${freshIds.has(String(s.id)) ? 'fresh' : ''}">
+        <div class="top"><span class="co">${esc(where)}</span><span class="closer">${esc(s.closers || '—')}</span></div>
+        <div class="what">${esc(what)}${esc(dateBit)}</div>
+      </div>`;
+  }).join('');
+  fitToBox(box);
+}
+
+function celebrate(s){
+  const el = document.getElementById('celebrate');
+  const who = (s.closers || '').trim() || 'The team';
+  const x = split(s);
+  const parts = [];
+  if(x.units) parts.push(plural(x.units, 'unit'));
+  if(x.voice) parts.push(plural(x.voice, 'voice line'));
+  el.textContent = `🎉 ${who} just closed ${parts.join(' + ') || 'a sale'}!`;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 7000);
+}
+
+// ===== Clock =====
+function tick(){
+  const now = new Date();
+  document.getElementById('clockTime').textContent = now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  document.getElementById('clockDate').textContent = now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+}
+
+// ===== Signage conveniences =====
+// No clicks needed: the screen runs itself. Keep the display awake where supported,
+// and re-fit the lists if the fonts finish loading late or the screen size changes.
+async function keepAwake(){
+  try{ if('wakeLock' in navigator) await navigator.wakeLock.request('screen'); }catch(e){}
+}
+document.addEventListener('visibilitychange', () => { if(document.visibilityState === 'visible') keepAwake(); });
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 300); });
+
+// ===== Start =====
+tick(); setInterval(tick, 1000);
+render();
+load();
+keepAwake();
+setInterval(load, REFRESH_SECONDS * 1000);
+setInterval(() => { viewIdx = (viewIdx + 1) % VIEWS.length; renderLeaderboard(); }, ROTATE_SECONDS * 1000);
+// Reload the whole page every 6 hours so the TV always picks up the latest version of this file.
+setTimeout(() => location.reload(), 6 * 60 * 60 * 1000);
+</script>
+</body>
+</html>
