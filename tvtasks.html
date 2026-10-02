@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Board TV</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg:#0B1420;
+  --surface:#121C2B;
+  --surface-2:#1A2740;
+  --border:#2A3C58;
+  --text:#F2F6FB;
+  --text-muted:#9DAFC7;
+  --accent:#33D6A6;
+  --accent-dim:#1E5C4B;
+  --amber:#FFB35C;
+  --blue:#6C8CFF;
+  --danger:#FF6B6B;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;overflow:hidden;}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Inter',system-ui,sans-serif;
+  cursor:none;                 /* Yodeck has no pointer — keep it off screen */
+  user-select:none;
+}
+
+#tv{height:100vh;display:flex;flex-direction:column;padding:1.5vh 1.2vw;gap:1.2vh;}
+
+/* ---------- top strip ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:1.5vw;flex-shrink:0;}
+.top .left h1{
+  font-family:'Space Grotesk',sans-serif;font-size:3.1vh;font-weight:700;
+  margin:0;line-height:1;letter-spacing:-0.02em;
+}
+.top .left .sub{color:var(--text-muted);font-size:1.5vh;margin-top:0.5vh;}
+.top .mid{flex:1;max-width:46vw;}
+.top .mid .nums{
+  display:flex;align-items:baseline;gap:0.7vw;
+  font-family:'Space Grotesk',sans-serif;font-size:3.4vh;line-height:1;font-weight:700;
+}
+.top .mid .nums span{font-size:1.7vh;color:var(--text-muted);font-weight:500;font-family:'Inter',sans-serif;}
+.top .mid .nums .late{color:var(--danger);margin-left:auto;font-size:1.9vh;font-weight:600;}
+.bigbar{height:1.1vh;background:#0A1320;border-radius:99px;overflow:hidden;margin-top:0.9vh;border:1px solid var(--border);}
+.bigbar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;}
+.top .right{text-align:right;flex-shrink:0;}
+.top .right .time{font-family:'JetBrains Mono',monospace;font-size:3vh;line-height:1;}
+.top .right .live{display:flex;align-items:center;justify-content:flex-end;gap:0.5vw;margin-top:0.7vh;font-size:1.4vh;color:var(--text-muted);}
+.top .right .live .dot{width:0.9vh;height:0.9vh;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0.4vh rgba(51,214,166,.2);}
+.top .right .live.stale{color:var(--danger);}
+.top .right .live.stale .dot{background:var(--danger);box-shadow:0 0 0 0.4vh rgba(255,107,107,.2);}
+
+/* ---------- the grid of agents ---------- */
+#grid{
+  flex:1;min-height:0;display:grid;gap:0.9vh 0.9vw;
+  grid-auto-rows:minmax(0,1fr);      /* every row shares the height evenly */
+}
+.col{
+  min-height:0;min-width:0;display:flex;flex-direction:column;
+  background:var(--surface);border:2px solid var(--border);border-radius:1.2vh;overflow:hidden;
+}
+.col.clear{border-color:var(--accent-dim);}
+.col.behind{border-color:var(--danger);}
+
+.col-head{
+  flex-shrink:0;padding:1.1vh 0.9vw;background:var(--surface-2);
+  border-bottom:2px solid var(--border);
+}
+.col-head .nm{
+  font-family:'Space Grotesk',sans-serif;font-weight:700;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.col-head .score{display:flex;align-items:baseline;gap:0.4vw;margin-top:0.5vh;color:var(--text-muted);}
+.col-head .score b{font-family:'Space Grotesk',sans-serif;color:var(--accent);line-height:1;}
+.col-head .score .late{color:var(--danger);font-weight:600;margin-left:auto;}
+.minibar{height:0.7vh;background:#0A1320;border-radius:99px;overflow:hidden;margin-top:0.7vh;}
+.minibar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .6s ease;}
+
+/* The list shrinks to fit: its font-size is set in JS, everything inside is in em. */
+.col-list{flex:1;min-height:0;overflow:hidden;padding:0.8vh 0.7vw;}
+
+.ti{
+  display:flex;align-items:flex-start;gap:0.5em;
+  background:var(--surface-2);border:1px solid var(--border);
+  border-left:0.35em solid var(--border);border-radius:0.5em;
+  padding:0.45em 0.55em;margin-bottom:0.4em;line-height:1.25;
+}
+.ti.p-critical{border-left-color:var(--danger);}
+.ti.p-high{border-left-color:var(--amber);}
+.ti.p-medium{border-left-color:var(--blue);}
+.ti.p-low{border-left-color:var(--text-muted);}
+.ti.late{border-color:var(--danger);}
+.ti.done{border-left-color:var(--accent);background:rgba(51,214,166,.07);opacity:.62;}
+.ti.done .tx{text-decoration:line-through;color:var(--text-muted);}
+
+.ti .mk{
+  flex-shrink:0;width:1.25em;height:1.25em;border-radius:0.3em;
+  border:0.14em solid var(--border);display:flex;align-items:center;justify-content:center;
+  font-size:.9em;color:transparent;line-height:1;
+}
+.ti.done .mk{background:var(--accent);border-color:var(--accent);color:#06231b;}
+.ti .tx{flex:1;min-width:0;word-break:break-word;}
+.ti .due{
+  flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:.78em;
+  color:var(--text-muted);padding-top:.15em;
+}
+.ti.late .due{color:var(--danger);font-weight:600;}
+
+.more{
+  text-align:center;color:var(--text-muted);font-size:.85em;
+  border:1px dashed var(--border);border-radius:0.5em;padding:0.3em;
+}
+.col-empty{
+  display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--text-muted);font-size:1.7vh;text-align:center;
+}
+
+.fullmsg{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:1.4vh;color:var(--text-muted);text-align:center;
+}
+.fullmsg .h{font-family:'Space Grotesk',sans-serif;font-size:3.6vh;color:var(--text);}
+.fullmsg .p{font-size:2vh;max-width:60vw;}
+</style>
+</head>
+<body>
+<div id="tv">
+
+  <div class="top">
+    <div class="left">
+      <h1 id="title">Today's Tasks</h1>
+      <div class="sub" id="dateLine"></div>
+    </div>
+    <div class="mid">
+      <div class="nums" id="nums">0<span>/ 0 done</span></div>
+      <div class="bigbar"><i id="bar" style="width:0%"></i></div>
+    </div>
+    <div class="right">
+      <div class="time" id="clock">--:--</div>
+      <div class="live" id="live"><span class="dot"></span><span id="liveText">live</span></div>
+    </div>
+  </div>
+
+  <div id="grid"></div>
+
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — edit these two lines
+   ============================================================ */
+
+// Same /exec URL as the task board. This screen only ever reads.
+const API_URL = 'https://script.google.com/macros/s/AKfycbz1lnsh7QZqvF8YcGF2c7l4fP8mWCXMJaOp8xjXPdVgm0M0AHM4e0ZahE_xfWyg7C7-/exec';
+const API_KEY = 'miami-tasks-2026';
+
+const ROSTER_KEY = 'tpl:#agents';
+
+const REFRESH_MS = 30000;          // pull new data every 30 seconds
+const HARD_RELOAD_MS = 6*60*60*1000; // full page reload every 6 hours
+
+// Set to true to leave people with no tasks off the screen entirely, which
+// gives everyone else more room.
+const HIDE_EMPTY_AGENTS = false;
+
+// Completed tasks are shown until the screen runs out of room, then they're the
+// first thing dropped. Set to false to never show them at all.
+const SHOW_DONE = true;
+
+/* ============================================================
+   State
+   ============================================================ */
+
+let tasks = [];
+let rosterRows = [];
+let lastGoodSync = null;
+
+function todayStr(){
+  const d = new Date();
+  return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,10);
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function prettyTime(hhmm){
+  const bits = String(hhmm || '').split(':');
+  const h = parseInt(bits[0], 10);
+  const m = bits[1] || '00';
+  if(isNaN(h)) return '';
+  const ap = h >= 12 ? 'p' : 'a';
+  const hr = h % 12 === 0 ? 12 : h % 12;
+  return `${hr}:${m}${ap}`;
+}
+
+function isLate(t){
+  if(t.status === 'done' || !t.dueTime) return false;
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  return t.dueTime < hhmm;
+}
+
+/* ============================================================
+   Data
+   ============================================================ */
+
+async function refresh(){
+  if(API_URL.indexOf('PASTE_') === 0){
+    showMessage('Not connected', 'Paste the Tasks web app URL into API_URL near the top of this file.');
+    return;
+  }
+  try{
+    const date = todayStr();
+    const url = `${API_URL}?action=list&key=${encodeURIComponent(API_KEY)}&date=${encodeURIComponent(date)}&_=${Date.now()}`;
+    const res = await fetch(url, { method:'GET', redirect:'follow', cache:'no-store' });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if(text.trim().startsWith('<')) throw new Error('login page');
+    const data = JSON.parse(text);
+    if(!data.success) throw new Error(data.error || 'load failed');
+
+    const all = Array.isArray(data.tasks) ? data.tasks : [];
+    tasks = all.filter(t => t.date === date);
+    rosterRows = all.filter(t => t.date === ROSTER_KEY);
+    lastGoodSync = new Date();
+    setLive(true);
+    render();
+  }catch(e){
+    console.error(e);
+    setLive(false);
+    // Keep whatever was on screen — a blank TV is worse than slightly stale numbers.
+  }
+}
+
+function setLive(ok){
+  const box = document.getElementById('live');
+  const txt = document.getElementById('liveText');
+  if(ok){
+    box.classList.remove('stale');
+    txt.textContent = 'live';
+  }else{
+    box.classList.add('stale');
+    const mins = lastGoodSync ? Math.round((Date.now() - lastGoodSync) / 60000) : null;
+    txt.textContent = mins === null ? 'no connection' : `${mins}m ago`;
+  }
+}
+
+function agentList(){
+  const ordered = rosterRows.slice()
+    .sort((a,b) => String(a.createdAt||'').localeCompare(String(b.createdAt||'')))
+    .map(r => (r.agent || r.title || '').trim())
+    .filter(Boolean);
+
+  const seen = new Set(ordered.map(n => n.toLowerCase()));
+  tasks.forEach(t => {
+    const n = (t.agent || '').trim();
+    if(n && !seen.has(n.toLowerCase())){ seen.add(n.toLowerCase()); ordered.push(n); }
+  });
+
+  if(HIDE_EMPTY_AGENTS){
+    return ordered.filter(n => tasks.some(t => t.agent === n));
+  }
+  return ordered;
+}
+
+/* ============================================================
+   Layout — decide rows and columns so every agent gets a tile
+   ============================================================ */
+
+function gridShape(n){
+  // Wide tiles read better than tall thin ones, so stay on one row while the
+  // columns are still wide enough to hold a task line.
+  if(n <= 5) return { cols: Math.max(n, 1), rows: 1 };
+  if(n <= 10) return { cols: Math.ceil(n / 2), rows: 2 };
+  return { cols: Math.ceil(n / 3), rows: 3 };
+}
+
+function headerScale(cols){
+  // Agent names shrink a little as the columns get narrower.
+  if(cols <= 3) return { nm: 3.1, score: 1.7, big: 2.6 };
+  if(cols === 4) return { nm: 2.7, score: 1.5, big: 2.3 };
+  if(cols === 5) return { nm: 2.4, score: 1.4, big: 2.1 };
+  return { nm: 2.1, score: 1.3, big: 1.9 };
+}
+
+/* ============================================================
+   Render
+   ============================================================ */
+
+function showMessage(h, p){
+  document.getElementById('grid').innerHTML =
+    `<div class="fullmsg" style="grid-column:1/-1;"><div class="h">${escapeHtml(h)}</div><div class="p">${escapeHtml(p)}</div></div>`;
+  document.getElementById('grid').style.gridTemplateColumns = '1fr';
+}
+
+function taskItem(t){
+  const done = t.status === 'done';
+  const late = isLate(t);
+  return `
+    <div class="ti p-${escapeHtml(t.priority || 'medium')} ${done ? 'done' : ''} ${late ? 'late' : ''}">
+      <span class="mk">&#10003;</span>
+      <span class="tx">${escapeHtml(t.title)}</span>
+      ${t.dueTime ? `<span class="due">${escapeHtml(prettyTime(t.dueTime))}</span>` : ''}
+    </div>`;
+}
+
+function render(){
+  const names = agentList();
+  const grid = document.getElementById('grid');
+
+  // header numbers
+  const done = tasks.filter(t => t.status === 'done').length;
+  const late = tasks.filter(isLate).length;
+  const pct = tasks.length ? Math.round((done / tasks.length) * 100) : 0;
+  document.getElementById('nums').innerHTML =
+    `${done}<span>/ ${tasks.length} done</span>` + (late ? `<span class="late">${late} late</span>` : '');
+  document.getElementById('bar').style.width = pct + '%';
+  document.getElementById('dateLine').textContent =
+    new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+
+  if(names.length === 0){
+    showMessage('No agents on the board', 'Add agents in the task board and they show up here.');
+    return;
+  }
+
+  const shape = gridShape(names.length);
+  const scale = headerScale(shape.cols);
+  grid.style.gridTemplateColumns = `repeat(${shape.cols}, minmax(0, 1fr))`;
+
+  grid.innerHTML = names.map(name => {
+    const mine = tasks.filter(t => t.agent === name);
+    const d = mine.filter(t => t.status === 'done').length;
+    const l = mine.filter(isLate).length;
+    const pc = mine.length ? Math.round((d / mine.length) * 100) : 0;
+    const clear = mine.length > 0 && d === mine.length;
+
+    // Open tasks first, earliest due time first; finished ones sink to the bottom
+    // so they're the first to be trimmed when space runs short.
+    const ordered = mine.slice().sort((a,b) =>
+      (a.status === 'done') - (b.status === 'done')
+      || (a.dueTime || '99:99').localeCompare(b.dueTime || '99:99'));
+    const listed = SHOW_DONE ? ordered : ordered.filter(t => t.status !== 'done');
+
+    return `
+      <div class="col ${clear ? 'clear' : ''} ${l ? 'behind' : ''}">
+        <div class="col-head">
+          <div class="nm" style="font-size:${scale.nm}vh;">${escapeHtml(name)}</div>
+          <div class="score" style="font-size:${scale.score}vh;">
+            <b style="font-size:${scale.big}vh;">${d}</b><span>of ${mine.length}</span>
+            ${l ? `<span class="late">${l} late</span>` : ''}
+          </div>
+          <div class="minibar"><i style="width:${pc}%"></i></div>
+        </div>
+        <div class="col-list" data-total="${listed.length}">
+          ${listed.length ? listed.map(taskItem).join('') : '<div class="col-empty">No tasks</div>'}
+        </div>
+      </div>`;
+  }).join('');
+
+  // Let the browser lay it out, then shrink anything that doesn't fit.
+  requestAnimationFrame(fitAll);
+}
+
+/* ============================================================
+   fitToBox — shrink type until the column fits, then trim
+   ============================================================ */
+
+function fitAll(){
+  document.querySelectorAll('.col-list').forEach(fitBox);
+}
+
+function fitBox(box){
+  const items = Array.from(box.querySelectorAll('.ti'));
+  if(items.length === 0) return;
+
+  // Start generous and step down. 2.1vh is comfortable across a room;
+  // 1.05vh is the smallest that's still readable on a 1080p screen.
+  const vh = window.innerHeight / 100;
+  const max = 2.1 * vh;
+  const min = 1.05 * vh;
+
+  let size = max;
+  box.style.fontSize = size + 'px';
+
+  while(box.scrollHeight > box.clientHeight && size > min){
+    size -= 0.6;
+    box.style.fontSize = size + 'px';
+  }
+
+  // Still too tall at the smallest readable size: drop items from the bottom
+  // (finished ones go first) and say how many are hidden.
+  if(box.scrollHeight > box.clientHeight){
+    let hidden = 0;
+    while(box.scrollHeight > box.clientHeight && box.querySelectorAll('.ti').length > 1){
+      const all = box.querySelectorAll('.ti');
+      all[all.length - 1].remove();
+      hidden++;
+      const tag = box.querySelector('.more');
+      if(tag){
+        tag.textContent = `+${hidden} more`;
+      }else{
+        const el = document.createElement('div');
+        el.className = 'more';
+        el.textContent = `+${hidden} more`;
+        box.appendChild(el);
+      }
+    }
+  }
+}
+
+/* ============================================================
+   Clock, refresh, resize
+   ============================================================ */
+
+function tickClock(){
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+}
+
+tickClock();
+setInterval(tickClock, 1000);
+
+refresh();
+setInterval(refresh, REFRESH_MS);
+
+// Yodeck can change resolution on us; re-fit rather than leave text clipped.
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 400);
+});
+
+// Roll over to the new day on its own, and refresh the page periodically so a
+// long-running player never drifts or leaks memory.
+let lastSeenDay = todayStr();
+setInterval(() => {
+  if(todayStr() !== lastSeenDay){
+    lastSeenDay = todayStr();
+    refresh();
+  }
+}, 60000);
+setTimeout(() => location.reload(), HARD_RELOAD_MS);
+</script>
+</body>
+</html>
