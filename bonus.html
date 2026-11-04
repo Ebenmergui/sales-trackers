@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonus Tracker</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+:root{
+  --bg:#0B1420;--surface:#121C2B;--surface-2:#1A2740;--border:#23324A;
+  --text:#E7ECF3;--text-muted:#8496B0;--accent:#33D6A6;--accent-dim:#1E5C4B;
+  --amber:#FFB35C;--blue:#6C8CFF;--danger:#FF6B6B;--radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:var(--bg);overflow:hidden}
+body{color:var(--text);font-family:'Inter',sans-serif;cursor:default}
+/* Fixed 1920x1080 canvas, scaled to whatever screen it is on */
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;padding:48px 56px 40px;display:flex;flex-direction:column;gap:28px}
+h1,h2{font-family:'Space Grotesk',sans-serif}
+.mono{font-family:'JetBrains Mono',monospace}
+
+.top{display:flex;justify-content:space-between;align-items:flex-end}
+.top h1{font-size:56px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+.top .sub{margin-top:10px;font-size:24px;color:var(--text-muted);display:flex;align-items:center;gap:14px}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--accent-dim);color:var(--accent);border-radius:999px;padding:5px 16px;font-size:20px;font-weight:600}
+.badge .pulse{width:9px;height:9px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px rgba(51,214,166,.18)}
+.top .right{text-align:right}
+.top .day{font-family:'Space Grotesk',sans-serif;font-size:40px;font-weight:600;line-height:1}
+.top .day span{color:var(--text-muted);font-weight:500}
+.top .upd{margin-top:10px;font-size:20px;color:var(--text-muted)}
+.top .upd.err{color:var(--danger)}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 26px}
+.kpi .label{font-size:22px;color:var(--text-muted)}
+.kpi .value{font-family:'Space Grotesk',sans-serif;font-size:64px;font-weight:700;line-height:1.05;margin-top:6px;color:var(--accent)}
+.kpi .value.blue{color:var(--blue)} .kpi .value.amber{color:var(--amber)} .kpi .value.white{color:var(--text)}
+
+.board{flex:1;min-height:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 28px 14px;display:flex;flex-direction:column}
+.cols,.row{display:grid;grid-template-columns:300px 1fr 170px 170px 180px 250px;column-gap:28px;align-items:center}
+.cols{padding:0 0 12px;border-bottom:1px solid var(--border);font-size:20px;color:var(--text-muted)}
+.cols div:nth-child(n+3){text-align:right}
+.rows{flex:1;min-height:0;display:flex;flex-direction:column}
+.row{flex:1;min-height:0;border-bottom:1px solid var(--border)}
+.row:last-child{border-bottom:none}
+.name{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.name small{display:block;font-family:'Inter',sans-serif;font-size:20px;font-weight:500;color:var(--text-muted);margin-top:2px}
+.prog{display:flex;align-items:center;gap:20px}
+.prog .n{font-family:'Space Grotesk',sans-serif;font-size:48px;font-weight:700;width:84px;text-align:right;line-height:1}
+.track-wrap{flex:1;position:relative;padding-top:26px}
+.track{position:relative;height:22px;background:var(--surface-2);border:1px solid var(--border);border-radius:999px}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--blue)}
+.fill.hit{background:var(--accent)}
+.tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--border)}
+.ticklbl{position:absolute;top:0;transform:translateX(-50%);font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-muted)}
+.ticklbl.hit{color:var(--accent)}
+.pace{position:absolute;top:-9px;bottom:-9px;width:4px;border-radius:2px;background:var(--amber)}
+.stat{text-align:right;font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:600}
+.stat small{display:block;font-family:'Inter',sans-serif;font-size:18px;font-weight:500;color:var(--text-muted);margin-top:2px}
+.ok{color:var(--accent)} .bad{color:var(--danger)} .muted{color:var(--text-muted)} .amber{color:var(--amber)}
+.bonus{text-align:right;font-family:'Space Grotesk',sans-serif;font-size:44px;font-weight:700}
+.bonus small{display:block;font-family:'Inter',sans-serif;font-size:19px;font-weight:500;color:var(--text-muted);margin-top:2px}
+.empty{flex:1;display:flex;align-items:center;justify-content:center;font-size:30px;color:var(--text-muted)}
+
+.rules{display:flex;flex-wrap:wrap;gap:10px 34px;font-size:21px;color:var(--text-muted)}
+.rules b{color:var(--text);font-weight:600}
+.legend{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:18px;height:12px;border-radius:3px}
+</style>
+</head>
+<body>
+<div id="stage">
+  <header class="top">
+    <div>
+      <h1>Bonus Tracker</h1>
+      <div class="sub"><span id="monthLabel">—</span><span class="badge"><span class="pulse"></span>Live from the sales log</span></div>
+    </div>
+    <div class="right">
+      <div class="day">Day <span id="dayNow">—</span> <span>of</span> <span id="dayTotal">—</span></div>
+      <div class="upd" id="updated">Loading…</div>
+    </div>
+  </header>
+
+  <section class="kpis">
+    <div class="kpi"><div class="label">Team internet units</div><div class="value white" id="kUnits">—</div></div>
+    <div class="kpi"><div class="label">Bonus if the month ended today</div><div class="value" id="kNow">—</div></div>
+    <div class="kpi"><div class="label">Bonus at this pace</div><div class="value blue" id="kPace">—</div></div>
+    <div class="kpi"><div class="label">Closers on pace for a bonus</div><div class="value amber" id="kQual">—</div></div>
+  </section>
+
+  <section class="board">
+    <div class="cols">
+      <div>Closer</div><div>Internet units this month</div><div>200M + FiOS</div><div>Voice attach</div><div>Bonus now</div><div>At this pace</div>
+    </div>
+    <div class="rows" id="rows"><div class="empty">Loading sales…</div></div>
+  </section>
+
+  <footer class="rules" id="rules"></footer>
+</div>
+
+<script>
+// ---------- Connection (same Google Sheet backend as the Team Sales Tracker; read-only) ----------
+const API_URL = 'https://script.google.com/macros/s/AKfycbw8T45gynFK9EZbEB_8204n14Ff9XRACPollLwW85FWWmG4kbGnGq5cJlcItdG0seEk/exec';
+const API_KEY = 'miami123';
+const REFRESH_MS = 30 * 1000;            // pull new sales every 30 seconds
+const FULL_RELOAD_MS = 6 * 60 * 60 * 1000; // full page reload every 6 hours
+
+// ---------- Bonus plan (edit here if the plan changes) ----------
+const BONUS = {
+  levels: [ {min:30, pay:250}, {min:40, pay:350}, {min:50, pay:450}, {min:60, pay:600} ],
+  premiumMin: 0.50,      // 5G 200M + FiOS share of internet units; below this drops one level
+  cancelMax: 0.30,       // over this drops one level (not tracked per closer yet, shown in the footer only)
+  voiceUnitsMin: 30,     // must reach this many internet units to earn the voice line bonus
+  voice: [ {min:0.40, pay:100}, {min:0.80, pay:200} ]
+};
+// People not in the plan (matched by first name, case-insensitive)
+const EXCLUDE = ['samuel', 'emilio'];
+// Spelling fixes so one person never shows up twice
+const NAME_FIX = { 'frederico cortes':'Federico Cortes' };
+// Weekdays the office is closed (not counted as selling days)
+const HOLIDAYS = ['2026-11-26','2026-11-27','2026-12-24','2026-12-25','2026-12-31','2027-01-01'];
+
+// ---------- Product recognition (copied from the Team Sales Tracker so counts match exactly) ----------
+const PRODUCT_ALIASES = {
+  '5G 100M': ['5g 100m'],
+  '5G 200M': ['5g 200m'],
+  'FiOS 300M': ['fios 300m'],
+  'FiOS 500M': ['fios 500m'],
+  'FiOS 1G': ['fios 1g'],
+  'FiOS 2G': ['fios 2g'],
+  'One Talk': ['one talk', 'onetalk'],
+  'One Talk Mobile App': ['one talk mobile app', 'onetalk mobile app', 'one talk mobile', 'onetalk mobile'],
+  'MyBiz line': ['mybiz line', 'mybiz'],
+  'Smartphone Device (iPhone, Samsung, etc)': ['smartphone', 'iphone', 'samsung'],
+  '4G 25M': ['4g 25m'],
+  'BDV New': ['bdv new'],
+  'BDV Winback': ['bdv winback', 'bdv wb', 'bdv win back']
+};
+
+function normalizeProductText(str){
+  if(!str) return '';
+  let s = String(str).toLowerCase();
+  s = s.replace(/(\d+)\s*mbps\b/g, '$1m');     // "200mbps" -> "200m"
+  s = s.replace(/(\d+)\s*gbps\b/g, '$1g');     // "1gbps" -> "1g"
+  s = s.replace(/(\d)\s*x\b/g, '$1 x ');       // "3x" -> "3 x " so it tokenizes separately
+  s = s.replace(/\bx\s*(\d)/g, ' x $1');       // "x2" -> " x 2"
+  s = s.replace(/[^a-z0-9]+/g, ' ');           // strip punctuation
+  s = s.replace(/\bmy\s*biz\b/g, 'mybiz');     // "My biz" / "My Biz" -> "mybiz"
+  s = s.replace(/\bbvd\b/g, 'bdv');           // "BVD" -> "BDV" (interchangeable abbreviation)
+  s = s.replace(/\b(\d+)000\s*m\b/g, '$1g');   // 1000M -> 1G, 2000M -> 2G, etc.
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+// Finds the single best (longest/most specific) product alias match within one segment
+// of text, allowing an optional trailing "s" for plurals ("One Talks", "MyBiz lines").
+function matchProductInSegment(norm){
+  let best = null;
+  Object.entries(PRODUCT_ALIASES).forEach(([key, aliases]) => {
+    aliases.forEach(alias => {
+      const escaped = alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const re = new RegExp(`\\b${escaped}s?\\b`);
+      const m = re.exec(norm);
+      if(m && (!best || alias.length > best.aliasLen)){
+        best = { key, start: m.index, end: m.index + m[0].length, aliasLen: alias.length };
+      }
+    });
+  });
+  return best;
+}
+
+// Notes are usually a list like "3 x 5G 200M, 2 x One Talk, 1 MyBiz line" — split on list
+// delimiters first so each product's quantity stays attached to the right product, then
+// find the product mentioned in each segment plus any leftover number as its quantity.
+function findProductMentions(rawText){
+  if(!rawText) return [];
+  const segments = String(rawText).split(/[,;\n]+|\s\+\s|\s+and\s+/i).map(seg=>seg.trim()).filter(Boolean);
+  const found = [];
+  segments.forEach(seg=>{
+    const norm = normalizeProductText(seg);
+    if(!norm) return;
+    const match = matchProductInSegment(norm);
+    if(!match) return;
+    const remainder = (norm.slice(0, match.start) + ' ' + norm.slice(match.end)).trim();
+    const qtyMatch = remainder.match(/\b(\d{1,2})\b/);
+    const qty = qtyMatch ? parseInt(qtyMatch[1], 10) : 1;
+    found.push({ type: match.key, qty });
+  });
+  return found;
+}
+
+// Returns the recognized product line(s) for a sale. The main product is read from Units
+// Sold and/or Notes (Notes wins if both mention something, so nothing is double-counted).
+// BDV New / BDV Winback are counted from Notes only — the dedicated "BVD Lines New/Winback"
+// number fields on the sale are NOT used, since Notes has proven to be the reliable source
+// and those number fields can be stale or out of sync with what actually happened.
+function saleLines(s){
+  const unitsMentions = findProductMentions(s.units || '');
+  const notesMentions = findProductMentions(s.notes || '');
+  const notesTypes = new Set(notesMentions.map(m => m.type));
+  // Notes' count wins for any product it names; Units Sold only fills in products Notes
+  // never mentioned at all (so the same product is never double-counted).
+  const allMentions = [...notesMentions, ...unitsMentions.filter(m => !notesTypes.has(m.type))];
+
+  const mainMentions = allMentions.filter(m => m.type !== 'BDV New' && m.type !== 'BDV Winback');
+  // BDV comes from Notes only — never the Units Sold field, never the BVD Lines number fields.
+  const bdvNewFromNotes = notesMentions.filter(m => m.type === 'BDV New');
+  const bdvWinFromNotes = notesMentions.filter(m => m.type === 'BDV Winback');
+
+  const lines = [];
+  if(mainMentions.length){
+    lines.push(...mainMentions);
+  } else if(allMentions.length === 0){
+    // Nothing recognized at all in either field — fall back to the raw Units Sold text so
+    // the sale is never silently dropped from the count.
+    const fallbackType = (s.units && s.units.trim()) ? s.units.trim() : 'Unspecified';
+    const fallbackSource = (s.notes && s.notes.trim()) ? s.notes : (s.units || '');
+    const m = fallbackSource.match(/(\d+)\s*x\b/i);
+    const qty = m ? parseInt(m[1], 10) : 1;
+    lines.push({ type: fallbackType, qty });
+  }
+
+  if(bdvNewFromNotes.length) lines.push(...bdvNewFromNotes);
+  if(bdvWinFromNotes.length) lines.push(...bdvWinFromNotes);
+
+  return lines;
+}
+
+const UNIT_PRODUCT_TYPES = new Set([
+  '5G 100M', '5G 200M', '4G 25M',
+  'FiOS 300M', 'FiOS 500M', 'FiOS 1G', 'FiOS 2G'
+]);
+
+function isUnitType(type){
+  return UNIT_PRODUCT_TYPES.has(type);
+}
+
+
+function isPremium(type){ return type === '5G 200M' || type.startsWith('FiOS'); }
+
+// ---------- Helpers ----------
+const fmt$ = n => '$' + Math.round(n).toLocaleString('en-US');
+const pct = x => Math.round(x * 100) + '%';
+function localISO(d){ const z = new Date(d.getTime() - d.getTimezoneOffset()*60000); return z.toISOString().slice(0,10); }
+function cleanName(n){ const t = (n||'').trim(); return NAME_FIX[t.toLowerCase()] || t; }
+function excluded(n){ const f = n.toLowerCase(); return !f || f === 'none' || EXCLUDE.some(x => f.startsWith(x)); }
+function sellingDays(year, month, upToDay){
+  const last = new Date(year, month + 1, 0).getDate();
+  let total = 0, soFar = 0;
+  for(let d = 1; d <= last; d++){
+    const dt = new Date(year, month, d), wd = dt.getDay();
+    if(wd === 0 || wd === 6 || HOLIDAYS.includes(localISO(dt))) continue;
+    total++; if(d <= upToDay) soFar++;
+  }
+  return { total, soFar: Math.max(soFar, 1) };
+}
+function payFor(units, premiumShare, attach){
+  let lvl = -1;
+  BONUS.levels.forEach((l, i) => { if(units >= l.min) lvl = i; });
+  if(lvl >= 0 && premiumShare < BONUS.premiumMin) lvl -= 1;
+  const unit = lvl >= 0 ? BONUS.levels[lvl].pay : 0;
+  let voice = 0;
+  if(units >= BONUS.voiceUnitsMin) BONUS.voice.forEach(v => { if(attach >= v.min) voice = v.pay; });
+  return { unit, voice, total: unit + voice };
+}
+
+// ---------- Build the board ----------
+let sales = [];
+function compute(){
+  const now = new Date();
+  const ym = localISO(now).slice(0,7);
+  const days = sellingDays(now.getFullYear(), now.getMonth(), now.getDate());
+  const people = new Map();
+  const credit = (name, share, s) => {
+    if(excluded(name)) return;
+    const p = people.get(name) || { name, units:0, premium:0, voice:0 };
+    saleLines(s).forEach(l => {
+      if(isUnitType(l.type)){ p.units += l.qty * share; if(isPremium(l.type)) p.premium += l.qty * share; }
+      else p.voice += l.qty * share;
+    });
+    people.set(name, p);
+  };
+  sales.filter(s => (s.entryDate||'').startsWith(ym)).forEach(s => {
+    const closer = cleanName(s.closers), fronter = cleanName(s.fronters);
+    const split = fronter && fronter.toLowerCase() !== 'none' && fronter.toLowerCase() !== closer.toLowerCase();
+    if(split){ credit(closer, 0.5, s); credit(fronter, 0.5, s); } else credit(closer, 1, s);
+  });
+  const rows = [...people.values()].map(p => {
+    const prem = p.units ? p.premium / p.units : 0;
+    const attach = p.units ? p.voice / p.units : 0;
+    const paceUnits = Math.round(p.units / days.soFar * days.total);
+    const next = BONUS.levels.find(l => p.units < l.min);
+    return { ...p, prem, attach, paceUnits, next,
+      now: payFor(p.units, prem, attach), pace: payFor(paceUnits, prem, attach) };
+  }).sort((a, b) => b.units - a.units || b.pace.total - a.pace.total);
+  return { ym, days, rows };
+}
+
+function render(){
+  const { ym, days, rows } = compute();
+  document.getElementById('monthLabel').textContent = new Date(ym + '-01T00:00:00').toLocaleDateString('en-US', { month:'long', year:'numeric' });
+  document.getElementById('dayNow').textContent = days.soFar;
+  document.getElementById('dayTotal').textContent = days.total;
+  const units = rows.reduce((t, r) => t + r.units, 0);
+  document.getElementById('kUnits').textContent = Math.round(units).toLocaleString('en-US');
+  document.getElementById('kNow').textContent = fmt$(rows.reduce((t, r) => t + r.now.total, 0));
+  document.getElementById('kPace').textContent = fmt$(rows.reduce((t, r) => t + r.pace.total, 0));
+  document.getElementById('kQual').textContent = rows.filter(r => r.pace.total > 0).length + ' of ' + rows.length;
+
+  const box = document.getElementById('rows');
+  box.innerHTML = '';
+  if(!rows.length){ box.innerHTML = '<div class="empty">No sales logged this month yet.</div>'; }
+  const top = BONUS.levels[BONUS.levels.length - 1].min;
+  const scaleMax = Math.max(top + 10, ...rows.map(r => Math.max(r.units, r.paceUnits)));
+  const at = u => Math.min(100, u / scaleMax * 100) + '%';
+  rows.forEach(r => {
+    const row = document.createElement('div'); row.className = 'row';
+    const hit = r.units >= BONUS.levels[0].min;
+    const ticks = BONUS.levels.map(l => `<div class="tick" style="left:${at(l.min)}"></div>`).join('');
+    const tlabels = BONUS.levels.map(l => `<div class="ticklbl ${r.units >= l.min ? 'hit' : ''}" style="left:${at(l.min)}">${l.min}</div>`).join('');
+    const toNext = r.next ? `${Math.ceil(r.next.min - r.units)} to ${r.next.min}` : 'Top level';
+    const premCls = r.prem >= BONUS.premiumMin ? 'ok' : 'bad';
+    const voiceCls = r.attach >= BONUS.voice[0].min ? 'ok' : 'muted';
+    const voiceNote = r.units >= BONUS.voiceUnitsMin ? (r.now.voice ? '+' + fmt$(r.now.voice) : `needs ${pct(BONUS.voice[0].min)}`) : `needs ${BONUS.voiceUnitsMin} units`;
+    row.innerHTML = `
+      <div class="name"></div>
+      <div class="prog"><div class="n">${Math.round(r.units * 10) / 10}</div>
+        <div class="track-wrap">${tlabels}<div class="track"><div class="fill ${hit ? 'hit' : ''}" style="width:${at(r.units)}"></div>${ticks}<div class="pace" style="left:${at(r.paceUnits)}"></div></div></div></div>
+      <div class="stat ${premCls}">${pct(r.prem)}<small>needs ${pct(BONUS.premiumMin)}</small></div>
+      <div class="stat ${voiceCls}">${pct(r.attach)}<small>${voiceNote}</small></div>
+      <div class="bonus ${r.now.total ? 'ok' : 'muted'}">${r.now.total ? fmt$(r.now.total) : '$0'}<small>${toNext}</small></div>
+      <div class="bonus ${r.pace.total ? '' : 'muted'}">${r.pace.total ? fmt$(r.pace.total) : '$0'}<small>${r.paceUnits} units at this pace</small></div>`;
+    const nm = row.querySelector('.name'); nm.textContent = r.name;
+    box.appendChild(row);
+  });
+
+  const L = BONUS.levels.map(l => `<b>${l.min}+</b> ${fmt$(l.pay)}`).join(' &nbsp; ');
+  document.getElementById('rules').innerHTML = `
+    <span>${L}</span>
+    <span>200M + FiOS under <b>${pct(BONUS.premiumMin)}</b> drops a level</span>
+    <span>Cancels over <b>${pct(BONUS.cancelMax)}</b> drop a level (applied at payout)</span>
+    <span>Voice attach <b>${pct(BONUS.voice[0].min)}+</b> ${fmt$(BONUS.voice[0].pay)}, <b>${pct(BONUS.voice[1].min)}+</b> ${fmt$(BONUS.voice[1].pay)} with ${BONUS.voiceUnitsMin}+ units</span>
+    <span class="legend"><span class="sw" style="background:var(--amber)"></span>finish at this pace</span>`;
+}
+
+// ---------- Load (read-only) ----------
+let loading = false;
+async function load(){
+  if(loading) return; loading = true;
+  const upd = document.getElementById('updated');
+  try{
+    const res = await fetch(`${API_URL}?action=list&key=${encodeURIComponent(API_KEY)}&_=${Date.now()}`, { method:'GET', redirect:'follow', cache:'no-store' });
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if(!data.success) throw new Error(data.error || 'Could not load sales');
+    sales = Array.isArray(data.sales) ? data.sales : [];
+    render();
+    upd.className = 'upd';
+    upd.textContent = 'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  }catch(e){
+    console.error(e);
+    upd.className = 'upd err';
+    upd.textContent = 'Can’t reach the sales log, retrying (' + e.message + ')';
+  }finally{ loading = false; }
+}
+
+// ---------- Fit the 1920x1080 canvas to any screen ----------
+function fit(){
+  const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+  const st = document.getElementById('stage');
+  st.style.transform = `scale(${s})`;
+  st.style.left = ((window.innerWidth - 1920 * s) / 2) + 'px';
+  st.style.top = ((window.innerHeight - 1080 * s) / 2) + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+load();
+setInterval(load, REFRESH_MS);
+setTimeout(() => location.reload(), FULL_RELOAD_MS);
+</script>
+</body>
+</html>
