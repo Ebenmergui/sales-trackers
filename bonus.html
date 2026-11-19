@@ -40,6 +40,7 @@ h1,h2{font-family:'Space Grotesk',sans-serif}
 .cols,.row{display:grid;grid-template-columns:300px 1fr 170px 170px 180px 250px;column-gap:28px;align-items:center}
 .cols{padding:0 0 12px;border-bottom:1px solid var(--border);font-size:20px;color:var(--text-muted)}
 .cols div:nth-child(n+3){text-align:right}
+.cols div:nth-child(3){font-size:17px;white-space:nowrap}
 .rows{flex:1;min-height:0;display:flex;flex-direction:column}
 .row{flex:1;min-height:0;border-bottom:1px solid var(--border)}
 .row:last-child{border-bottom:none}
@@ -90,7 +91,7 @@ h1,h2{font-family:'Space Grotesk',sans-serif}
 
   <section class="board">
     <div class="cols">
-      <div>Closer</div><div>Internet units this month</div><div>200M + FiOS</div><div>Voice attach</div><div>Bonus now</div><div>At this pace</div>
+      <div>Closer</div><div>Internet units this month</div><div>200M/300M + FiOS</div><div>Voice attach</div><div>Bonus now</div><div>At this pace</div>
     </div>
     <div class="rows" id="rows"><div class="empty">Loading sales…</div></div>
   </section>
@@ -108,7 +109,7 @@ const FULL_RELOAD_MS = 6 * 60 * 60 * 1000; // full page reload every 6 hours
 // ---------- Bonus plan (edit here if the plan changes) ----------
 const BONUS = {
   levels: [ {min:30, pay:250}, {min:40, pay:350}, {min:50, pay:450}, {min:60, pay:600} ],
-  premiumMin: 0.50,      // 5G 200M + FiOS share of internet units; below this drops one level
+  premiumMin: 0.50,      // 5G 200M/300M + FiOS share of internet units; below this drops one level
   cancelMax: 0.30,       // over this drops one level (not tracked per closer yet, shown in the footer only)
   voiceUnitsMin: 30,     // must reach this many internet units to earn the voice line bonus
   voice: [ {min:0.40, pay:100}, {min:0.80, pay:200} ]
@@ -124,6 +125,7 @@ const HOLIDAYS = ['2026-11-26','2026-12-24','2026-12-25','2026-12-31','2027-01-0
 const PRODUCT_ALIASES = {
   '5G 100M': ['5g 100m'],
   '5G 200M': ['5g 200m'],
+  '5G 300M': ['5g 300m'],
   'FiOS 300M': ['fios 300m'],
   'FiOS 500M': ['fios 500m'],
   'FiOS 1G': ['fios 1g'],
@@ -227,7 +229,7 @@ function saleLines(s){
 }
 
 const UNIT_PRODUCT_TYPES = new Set([
-  '5G 100M', '5G 200M', '4G 25M',
+  '5G 100M', '5G 200M', '5G 300M', '4G 25M',
   'FiOS 300M', 'FiOS 500M', 'FiOS 1G', 'FiOS 2G'
 ]);
 
@@ -236,7 +238,8 @@ function isUnitType(type){
 }
 
 
-function isPremium(type){ return type === '5G 200M' || type.startsWith('FiOS'); }
+// 5G 300M counts the same as 5G 200M toward the premium share
+function isPremium(type){ return type === '5G 200M' || type === '5G 300M' || type.startsWith('FiOS'); }
 
 // ---------- Helpers ----------
 const fmt$ = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -337,7 +340,7 @@ function render(){
   const L = BONUS.levels.map(l => `<b>${l.min}+</b> ${fmt$(l.pay)}`).join(' &nbsp; ');
   document.getElementById('rules').innerHTML = `
     <span>${L}</span>
-    <span>200M + FiOS under <b>${pct(BONUS.premiumMin)}</b> drops a level</span>
+    <span>5G 200M/300M + FiOS under <b>${pct(BONUS.premiumMin)}</b> drops a level</span>
     <span>Cancels over <b>${pct(BONUS.cancelMax)}</b> drop a level (applied at payout)</span>
     <span>Voice attach <b>${pct(BONUS.voice[0].min)}+</b> ${fmt$(BONUS.voice[0].pay)}, <b>${pct(BONUS.voice[1].min)}+</b> ${fmt$(BONUS.voice[1].pay)} with ${BONUS.voiceUnitsMin}+ units</span>
     <span class="legend"><span class="sw" style="background:var(--amber)"></span>finish at this pace</span>`;
