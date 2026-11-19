@@ -342,6 +342,7 @@ function uid(){
 const PRODUCT_ALIASES = {
   '5G 100M': ['5g 100m'],
   '5G 200M': ['5g 200m'],
+  '5G 300M': ['5g 300m'],
   'FiOS 300M': ['fios 300m'],
   'FiOS 500M': ['fios 500m'],
   'FiOS 1G': ['fios 1g'],
@@ -456,7 +457,7 @@ function saleSummaryStr(s){
 // else recognized (One Talk, MyBiz line, Smartphone Device, BDV New/Winback) counts as a
 // "voice line" instead.
 const UNIT_PRODUCT_TYPES = new Set([
-  '5G 100M', '5G 200M', '4G 25M',
+  '5G 100M', '5G 200M', '5G 300M', '4G 25M',
   'FiOS 300M', 'FiOS 500M', 'FiOS 1G', 'FiOS 2G'
 ]);
 
