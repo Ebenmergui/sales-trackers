@@ -168,7 +168,7 @@ const FEED_ROWS = 8;             // max recent sales shown (trimmed to fit the s
 
 // ===== Product recognition (identical rules to the Team Sales Tracker) =====
 const PRODUCT_ALIASES = {
-  '5G 100M': ['5g 100m'], '5G 200M': ['5g 200m'],
+  '5G 100M': ['5g 100m'], '5G 200M': ['5g 200m'], '5G 300M': ['5g 300m'],
   'FiOS 300M': ['fios 300m'], 'FiOS 500M': ['fios 500m'], 'FiOS 1G': ['fios 1g'], 'FiOS 2G': ['fios 2g'],
   'One Talk': ['one talk', 'onetalk'],
   'One Talk Mobile App': ['one talk mobile app', 'onetalk mobile app', 'one talk mobile', 'onetalk mobile'],
@@ -179,7 +179,7 @@ const PRODUCT_ALIASES = {
   'BDV Winback': ['bdv winback', 'bdv wb', 'bdv win back']
 };
 const SHORT_NAME = { 'Smartphone Device (iPhone, Samsung, etc)': 'Smartphone' };
-const UNIT_TYPES = new Set(['5G 100M','5G 200M','4G 25M','FiOS 300M','FiOS 500M','FiOS 1G','FiOS 2G']);
+const UNIT_TYPES = new Set(['5G 100M','5G 200M','5G 300M','4G 25M','FiOS 300M','FiOS 500M','FiOS 1G','FiOS 2G']);
 
 function normalizeProductText(str){
   if(!str) return '';
